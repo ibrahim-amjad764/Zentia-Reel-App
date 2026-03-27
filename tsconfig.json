@@ -1,0 +1,97 @@
+// //tsconfig.json
+// {
+//   "compilerOptions": {
+//     "experimentalDecorators": true,
+//     "emitDecoratorMetadata": true,
+//     "target": "ES2020",
+//     "lib": [
+//       "dom",
+//       "dom.iterable",
+//       "esnext"
+//     ],
+//     "allowJs": true,
+//     "skipLibCheck": true,
+//     "strict": true,
+//     "noEmit": false,
+//     "outDir": "dist",
+//     "esModuleInterop": true,
+//     "module": "ESNext",
+//     "moduleResolution": "bundler",
+//     "resolveJsonModule": true,
+//     "isolatedModules": true,
+//     "jsx": "react-jsx",
+//     "baseUrl": "./src",
+//     "incremental": true,
+//     "plugins": [
+//       {
+//         "name": "next"
+//       }
+//     ],
+//     "paths": {
+//       "@/*": ["*"], // The `@` alias should refer to the root of `src`
+//       "@entities/*": ["entities/*"],
+//       "@db/*": ["db/*"],
+//       "@lib/*": ["lib/*"],
+//       "@components/*": ["components/*"],
+//       "@ws/*": ["ws/*"] 
+//     }
+//   },
+//   "include": [
+//     "next-env.d.ts",
+//     "**/*.ts",
+//     "**/*.tsx",
+//     ".next/types/**/*.ts",
+//     ".next/dev/types/**/*.ts",
+//     "**/*.mts",
+//     "tailwind.config.js"
+//   ],
+//   "exclude": [
+//     "node_modules",
+//     ".next"
+//   ]
+// }
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "lib": ["DOM", "ES2020"],
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": ".",
+    "baseUrl": ".",                           // <-- changed from "src" to "." to support @/components
+    "paths": {
+      "@/*": ["src/*"],
+      "@entities/*": ["src/entities/*"],
+      "@db/*": ["src/db/*"],
+      "@lib/*": ["src/lib/*"],
+      "@components/*": ["components/*"]      // <-- fixed path mapping
+    },
+    "allowJs": true,
+    "incremental": true,
+    "jsx": "react-jsx",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "src/**/*",
+    "components/**/*",                        // <-- added so TS sees components outside src
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next"
+  ]
+}
