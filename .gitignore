@@ -39,3 +39,4 @@ yarn-error.log*
 src/lib/serviceAccountKey.json".env.local" 
 firebase-service-account.json".env.local" 
 "src/lib/serviceAccountKey.json" 
+"firebase-service-account.json" 
