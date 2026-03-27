@@ -78,8 +78,6 @@
 
 
 import admin from "firebase-admin";
-import path from "path";
-import fs from "fs";
 
 let _isInitialized = false;
 
@@ -88,26 +86,32 @@ function initializeFirebaseAdmin(): void {
 
   if (!admin.apps.length) {
     try {
-      // Use environment variable for service account path
-      const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH || 
-        path.join(process.cwd(), "firebase-service-account.json");
+      // Get Firebase credentials from environment variables
+      const projectId = process.env.FIREBASE_PROJECT_ID;
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+      const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
-      // Path check karne ke liye
-      console.log("Service Account Path:", serviceAccountPath);
-
-      // Check if file exists
-      if (!fs.existsSync(serviceAccountPath)) {
-        throw new Error(`Service account file not found at: ${serviceAccountPath}`);
+      // Validate required environment variables
+      if (!projectId) {
+        throw new Error("FIREBASE_PROJECT_ID is not defined in environment variables");
+      }
+      if (!clientEmail) {
+        throw new Error("FIREBASE_CLIENT_EMAIL is not defined in environment variables");
+      }
+      if (!privateKey) {
+        throw new Error("FIREBASE_PRIVATE_KEY is not defined in environment variables");
       }
 
-      // JSON file read karo
-      const serviceAccount = JSON.parse(
-        fs.readFileSync(serviceAccountPath, "utf8")
-      );
+      // Format private key (replace \n with actual newlines)
+      const formattedPrivateKey = privateKey.replace(/\\n/g, '\n');
 
       // Initialize Firebase
       admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
+        credential: admin.credential.cert({
+          projectId: projectId,
+          clientEmail: clientEmail,
+          privateKey: formattedPrivateKey,
+        }),
       });
 
       _isInitialized = true;
