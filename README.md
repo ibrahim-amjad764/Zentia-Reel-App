@@ -1,65 +1,92 @@
-# 🚀 Next.js Firebase Auth + Edge Middleware App
+# 🚀 Zentia - Next.js Social Media Platform
 
-A **modern full-stack authentication and user management system** built with **Next.js App Router**, **Firebase Authentication**, **Edge Middleware**, and **PostgreSQL (TypeORM)**.
-This project demonstrates **real-world auth patterns**, **secure session handling**, and **high-performance route protection** using the **Edge Runtime**.
+A **modern full-stack social media application** built with **Next.js App Router**, **Firebase Authentication**, **PostgreSQL (TypeORM)**, and **Real-time Features**. This platform demonstrates **production-ready architecture**, **scalable authentication**, and **high-performance social features** including posts, notifications, and user interactions.
 
 ---
 
 ## ✨ Features
 
-* 🔐 **Firebase Authentication** (Signup / Login / Logout)
-* 🍪 **HttpOnly Cookie-based Sessions**
-* ⚡ **Next.js Edge Middleware** (CDN-level auth protection)
-* 🛡️ Protected routes (`/feed`)
-* 🚫 Auth pages blocked for logged-in users
-* 🧑‍💻 **PostgreSQL + TypeORM** user persistence
-* 🔄 **React Query** for efficient data fetching
-* 🌙 **Dark Mode Toggle**
-* 🔍 **Search Bar (centered, responsive)**
-* ➕ **Create Post Button**
-* 🎨 Tailwind CSS + shadcn/ui
-* 🧩 Clean, scalable architecture
+### 🔐 Authentication & Security
+* **Firebase Authentication** (Email/Password Signup & Login)
+* **HttpOnly Cookie-based Sessions** (XSS Protection)
+* **Next.js Edge Middleware** (CDN-level auth protection)
+* **Protected Routes** (`/feed`, `/profile`, `/api/*`)
+* **Auth Page Blocking** (redirect logic for logged-in users)
+* **Session Management** (automatic token refresh)
+* **Secure Logout** (cookie clearing)
+
+### 📱 Social Features
+* **Create & Share Posts** (with image upload support)
+* **Like/Unlike Posts** (real-time updates)
+* **Comment System** (nested replies)
+* **Follow/Unfollow Users** (relationship management)
+* **User Profiles** (editable information)
+* **Real-time Notifications** (WebSocket powered)
+* **Search Users** (debounced search functionality)
+* **Infinite Scroll** (optimized feed loading)
+
+### 🎨 User Interface
+* **Dark/Light Mode Toggle** (persistent theme)
+* **Responsive Design** (mobile-first approach)
+* **Modern UI Components** (shadcn/ui + Tailwind)
+* **Premium Animations** (neon effects, micro-interactions)
+* **Glass Morphism Effects** (modern design language)
+* **Loading States** (skeleton screens, spinners)
+
+### 🛠️ Technical Features
+* **TypeScript** (full type safety)
+* **React Query** (efficient data fetching & caching)
+* **PostgreSQL + TypeORM** (robust database layer)
+* **File Upload** (Cloudinary integration)
+* **Real-time Updates** (WebSocket notifications)
+* **API Rate Limiting** (security measures)
+* **Environment Variables** (secure configuration)
 
 ---
 
-## 🧠 Core Concept (High Level)
+## 🧠 Core Architecture
 
-* **Firebase (Client)** handles user identity
-* **Firebase Admin (Server)** verifies tokens
-* **Backend** sets a secure HttpOnly cookie
-* **Edge Middleware** reads cookies before page loads
-* Unauthorized users are redirected instantly
-* No client-side auth hacks or localStorage
+### Authentication Flow
+```
+Client (Firebase) → ID Token → API Route → Firebase Admin → Verification → HttpOnly Cookie
+                                                              ↓
+Edge Middleware ← Cookie Check ← Every Request ← Route Protection ← Redirect Logic
+```
+
+### Data Flow
+```
+UI Components → React Query → API Routes → TypeORM → PostgreSQL
+     ↑                                    ↓
+Real-time Updates ← WebSocket ← Notification Service ← Database Triggers
+```
 
 ---
 
 ## 🏗️ Tech Stack
 
 ### Frontend
-
-* Next.js (App Router)
-* React
-* Tailwind CSS
-* shadcn/ui
-* React Query
+- **Next.js 15** (App Router)
+- **React 18** (with hooks & concurrent features)
+- **TypeScript** (strict mode)
+- **Tailwind CSS** (custom design system)
+- **shadcn/ui** (component library)
+- **Zustand** (state management)
+- **React Query** (server state)
+- **Lucide React** (icons)
 
 ### Backend
+- **Next.js API Routes** (serverless functions)
+- **Firebase Admin SDK** (token verification)
+- **PostgreSQL** (primary database)
+- **TypeORM** (ORM with migrations)
+- **Cloudinary** (image storage)
+- **WebSocket Server** (real-time notifications)
 
-* Next.js API Routes
-* Firebase Admin SDK
-* Axios
-
-### Database
-
-* PostgreSQL
-* TypeORM
-
-### Security & Runtime
-
-* Edge Middleware
-* Edge Runtime (CDN)
-* HttpOnly Cookies
-* Firebase ID Tokens
+### Infrastructure
+- **Edge Middleware** (CDN-level protection)
+- **HttpOnly Cookies** (session security)
+- **Environment Variables** (configuration)
+- **Database Migrations** (schema versioning)
 
 ---
 
@@ -170,137 +197,66 @@ next-typeorm-postgres/
 │   └── page.tsx
 │
 ├── src/
-│   ├── components/
-│   │   ├── logo/
-│   │   ├── membership/
-│   │   │   ├── forget-page
-│   │   │   │       └── forgot-password.tsx
-│   │   │   ├── login-page-02
-│   │   │   │       └── login-from.tsx
-│   │   │   │       └── login-page-01.tsx
-│   │   │   ├── logout-page-03
-│   │   │   │       └── logout-from.tsx
-│   │   │   ├── profile-page
-│   │   │   │       └── EditProfileForm.tsx
-│   │   │   │       └── FollowButton.tsx
-│   │   │   │       └── ProfileCard.tsx
-│   │   │   │       └── ProfileContent.tsx
-│   │   │   │       └── ProfileHeader.tsx
-│   │   │   │       └── ProfilePageClient.tsx
-│   │   │   │       └── ProfileTabs.tsx
-│   │   │   │       └── UserProfileCards.tsx
-│   │   │   │       └── UserProfileSummary.tsx
-│   │   │   └── signup-page-01
-│   │   │           └── signup-form.tsx
-│   │   │           └── signup-page.tsx
-│   │   ├── navbar/
-│   │   │   └── navbar.tsx
-│   │   ├── notifications/
-│   │   │   ├── NotificationBell.tsx
-│   │   │   ├── NotificationDropdown.tsx
-│   │   │   ├── NotificationItem.tsx
-│   │   │   └── SearchBar.tsx
-│   │   ├── posts/
-│   │   │   ├── comments/
-│   │   │   │   └── CommentSection.tsx
-│   │   │   ├── likes/
-│   │   │   │   └── LikeButton.tsx
-│   │   │   ├── Share/
-│   │   │   │   └── ShareButton.tsx
-│   │   │   ├── Shared/
-│   │   │   │   ├── BackButton.tsx
-│   │   │   │   └── LinkToUserProfile.tsx
-│   │   │   ├── CreatePostModal.tsx
-│   │   │   ├── Post.tsx
-│   │   │   └── PostItem.tsx
-│   │   └── ui/
-│   │
-│   ├── db/
-│   │   ├── data-source.ts
-│   │   ├── init-db.ts
-│   │   └── hostDataSource.ts
-│   │
-│   ├── entities/
-│   │   ├── comment.ts
-│   │   ├── like.ts
-│   │   ├── post.ts
-│   │   ├── follow.ts
-│   │   ├── notification.ts
-│   │   └── user.ts
-│   │
-│   ├── lib/
-│   │   ├── api.ts
-│   │   ├── auth.ts
-│   │   ├── cloudinary.ts
-│   │   ├── firebase.ts
-│   │   ├── firebase-admin.ts
-│   │   ├── utils.ts
-│   │   ├── mappers.ts
-│   │   ├── profileHelpers.ts
-│   │   ├── notificationSocket.ts
-│   │   ├── notificationWsServer.ts
-│   │   └── websocket.ts
-│   │
-│   ├── migrations/
-│   │
-│   ├── providers/
-│   │   └── ReactQueryProvider.tsx
-│   │
-│   ├── services/
-│   │   ├── auth.service.ts
-│   │   ├── follow.service.ts
-│   │   ├── notification.service.ts
-│   │   └── user.service.ts
-│   │
-│   ├── store/
-│   │   ├── notificationStore.ts
-│   │   └── useStore.ts
-│   │
-│   └── types/
-│       ├── post.ts
-│       ├── profile.ts
-│       ├── renderUser.ts
-│       └── users.ts
-
+│   ├── components/                 # Reusable UI components
+│   │   ├── membership/            # Profile components
+│   │   ├── posts/                # Post-related components
+│   │   ├── notifications/         # Notification system
+│   │   └── ui/                  # Base UI components
+│   ├── entities/                  # TypeORM database models
+│   ├── lib/                      # Utility functions
+│   ├── services/                 # Business logic
+│   ├── store/                    # State management
+│   └── types/                    # TypeScript definitions
+├── components.json                # shadcn/ui config
+├── middleware.ts                # Edge middleware
+├── tailwind.config.js           # Tailwind configuration
+└── package.json                # Dependencies
 ```
 
-## 🔐 Authentication Flow
+---
 
-1. User logs in via **Firebase Auth (client)**
-2. Firebase returns an **ID Token**
-3. Token is sent to `/api/auth/login`
-4. Backend verifies token using **Firebase Admin**
-5. Backend sets **HttpOnly cookie**
-6. Middleware checks cookie on every request
-7. User can access `/feed`
+## 🔐 Authentication System
+
+### Firebase Integration
+```typescript
+// Client-side authentication
+const auth = getAuth(app);
+const userCredential = await signInWithEmailAndPassword(auth, email, password);
+const idToken = await userCredential.user.getIdToken();
+
+// Server-side verification
+const decodedToken = await admin.auth().verifyIdToken(idToken);
+```
+
+### Cookie Management
+```typescript
+// Secure cookie setting
+response.cookies.set("auth-token", idToken, {
+  httpOnly: true,        // Prevent XSS
+  sameSite: "lax",      // CSRF protection
+  secure: production,     // HTTPS only in prod
+  maxAge: 86400,        // 24 hours
+});
+```
+
+### Middleware Protection
+```typescript
+// Edge middleware runs at CDN level
+export function middleware(request: NextRequest) {
+  const token = request.cookies.get("auth-token")?.value;
+  
+  if (!token && request.nextUrl.pathname.startsWith("/feed")) {
+    return NextResponse.redirect(new URL("/auth/login", request.url));
+  }
+}
+```
 
 ---
 
-## ⚡ Edge Middleware (Why It Matters)
+## 🗄️ Database Schema
 
-* Runs **before page rendering**
-* Executes at **CDN edge locations**
-* No server or database hit
-* Extremely fast redirects
-* Perfect for auth & routing decisions
-
-> ❌ Middleware does **NOT** handle database queries
-> ✅ Only lightweight logic (cookies, headers, redirects)
-
----
-
-## 🧪 How to Test Middleware
-
-* Open `/feed` without login → redirected to `/auth/login`
-* Login successfully → cookie is set
-* Visit `/feed` → access granted
-* Try `/auth/login` while logged in → redirected to `/feed`
-
----
-
-## 🗄️ Database (TypeORM)
-
-```ts
+### User Entity
+```typescript
 @Entity("users")
 export class User {
   @PrimaryGeneratedColumn()
@@ -315,6 +271,12 @@ export class User {
   @Column({ nullable: true })
   lastName?: string;
 
+  @Column({ nullable: true })
+  avatarUrl?: string;
+
+  @Column({ nullable: true })
+  bio?: string;
+
   @Column({ default: true })
   isActive!: boolean;
 
@@ -323,33 +285,238 @@ export class User {
 }
 ```
 
-## 🌙 UI Highlights
+### Post Entity
+```typescript
+@Entity("posts")
+export class Post {
+  @PrimaryGeneratedColumn()
+  id!: string;
 
-* Sticky Facebook-style Navbar
-* Centered responsive search bar
-* Dark mode toggle (Tailwind)
-* User dropdown menu
-* Clean & accessible UI components
+  @Column()
+  content!: string;
 
+  @Column("simple-array", { nullable: true })
+  images?: string[];
 
-## 📌 Why This Project Is Real-World Ready
+  @ManyToOne(() => User)
+  user!: User;
 
-* Uses **industry-standard auth flow**
-* Secure against XSS (HttpOnly cookies)
-* Works on refresh & hard reload
-* Scales with CDN
-* Clean separation of concerns
-* Interview-ready architecture
+  @CreateDateColumn()
+  createdAt!: Date;
+}
+```
 
-## 👤 Author
+---
 
-**Ibrahim Amjad**
-Web Developer – Next.js, Firebase, PostgreSQL
+## 🎨 UI/UX Features
+
+### Theme System
+- **Dark Mode**: Deep blue background with neon accents
+- **Light Mode**: Clean white with subtle shadows
+- **Persistent**: User preference saved in localStorage
+- **Tailwind Integration**: Custom CSS variables for consistency
+
+### Component Library
+- **shadcn/ui**: Modern, accessible components
+- **Custom Components**: Specialized for social features
+- **Animations**: Premium micro-interactions
+- **Responsive**: Mobile-first design approach
+
+### Design Patterns
+- **Glass Morphism**: Frosted glass effects
+- **Neon Accents**: Vibrant color highlights
+- **Smooth Transitions**: 200ms ease animations
+- **Loading States**: Skeleton screens and spinners
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL database
+- Firebase project
+- Cloudinary account (for image uploads)
+
+### Installation
+```bash
+# Clone repository
+git clone <repository-url>
+cd next-typeorm-postgres
+
+# Install dependencies
+npm install
+
+# Setup environment variables
+cp .env.example .env.local
+# Edit .env.local with your credentials
+
+# Run database migrations
+npm run migration:run
+
+# Start development server
+npm run dev
+```
+
+### Environment Variables
+```env
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=your_username
+DB_PASSWORD=your_password
+DB_NAME=your_database
+
+# Firebase
+FIREBASE_PROJECT_ID=your_project_id
+FIREBASE_CLIENT_EMAIL=your_service_account_email
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----..."
+
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+```
+
+---
+
+## 📊 Performance Optimizations
+
+### Frontend
+- **React Query**: Intelligent caching & background refetching
+- **Infinite Scroll**: Lazy loading for large feeds
+- **Image Optimization**: Next.js Image component
+- **Code Splitting**: Automatic route-based splitting
+- **Debounced Search**: Reduced API calls
+
+### Backend
+- **Database Indexes**: Optimized query performance
+- **Connection Pooling**: Efficient database connections
+- **Edge Middleware**: CDN-level request handling
+- **WebSocket**: Real-time updates without polling
+
+---
+
+## 🔒 Security Features
+
+### Authentication Security
+- **HttpOnly Cookies**: Prevent XSS attacks
+- **CSRF Protection**: SameSite cookie attributes
+- **Token Verification**: Firebase Admin SDK validation
+- **Session Expiration**: 24-hour automatic logout
+
+### API Security
+- **Input Validation**: TypeORM entity validation
+- **Rate Limiting**: Prevent abuse
+- **CORS Configuration**: Proper cross-origin setup
+- **Environment Variables**: Sensitive data protection
+
+---
+
+## 🧪 Testing
+
+### Manual Testing
+1. **Authentication Flow**: Login → Cookie → Protected Route Access
+2. **Post Creation**: Create post with image upload
+3. **Social Interactions**: Like, comment, follow users
+4. **Real-time Features**: Test notification system
+5. **Theme Toggle**: Verify dark/light mode persistence
+
+### API Testing
+```bash
+# Test authentication
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"token":"firebase_id_token"}'
+
+# Test protected route
+curl -X GET http://localhost:3000/api/posts \
+  -H "Cookie: auth-token=valid_token"
+```
+
+---
+
+## 🚀 Deployment
+
+### Environment Setup
+- **Production**: Vercel (recommended for Next.js)
+- **Database**: PostgreSQL (Heroku, AWS RDS, Railway)
+- **File Storage**: Cloudinary (or AWS S3)
+- **Authentication**: Firebase (same project)
+
+### Build Process
+```bash
+# Build for production
+npm run build
+
+# Start production server
+npm start
+```
+
+### Environment Variables
+Set all variables in your hosting platform's dashboard:
+- Database connection strings
+- Firebase service account credentials
+- Cloudinary API keys
+- Next.js production settings
+
+---
+
+## 🛠️ Development Commands
+
+```bash
+# Development
+npm run dev              # Start development server
+npm run build            # Build for production
+npm start                # Start production server
+
+# Database
+npm run migration:generate # Create new migration
+npm run migration:run     # Run migrations
+npm run migration:revert  # Revert last migration
+
+# Code Quality
+npm run lint             # Run ESLint
+npm run type-check       # TypeScript validation
+```
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
 ---
 
 ## 📄 License
 
-MIT License
-# Next-js-Social-App
+This project is licensed under the MIT License - see the `LICENSE` file for details.
+
+---
+
+## 👤 Author
+
+**Ibrahim Amjad**
+- Full Stack Developer
+- Specialized in Next.js, Firebase, PostgreSQL
+- Passionate about modern web architecture
+- Focus on scalable, secure applications
+
+---
+
+## 🙏 Acknowledgments
+
+- **Next.js Team** - Excellent framework and documentation
+- **Firebase** - Robust authentication solution
+- **shadcn/ui** - Beautiful component library
+- **Tailwind CSS** - Utility-first CSS framework
+- **TypeORM** - Powerful TypeScript ORM
+
+---
+
+*Built with NextJs using modern web technologies*
 

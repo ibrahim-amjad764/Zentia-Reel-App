@@ -79,11 +79,15 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
       disabled={loading || initialLoading}
       aria-label={following ? "Unfollow user" : "Follow user"}
       className={`
-        relative flex items-center gap-2 px-2 py-2 rounded-full font-medium
+        relative flex items-center gap-2 px-3 py-2 rounded-full font-medium ring-neon
         
-        ${following === null ? "bg-gray-200 text-gray-500" : following ? "bg-gray-100 text-green-600 border border-gray-300 hover:bg-gray-200" : "bg-cyan-900 text-white hover:bg-cyan-700"}
+        ${following === null
+          ? "bg-white/6 text-muted-foreground border border-white/10"
+          : following
+            ? "bg-white/6 text-primary border border-white/12 hover:bg-white/10"
+            : "bg-primary text-primary-foreground shadow-neon hover:brightness-110"}
         ${loading || initialLoading ? "cursor-not-allowed opacity-70" : "cursor-pointer"}
-        shadow-md hover:shadow-lg
+        transition-[transform,filter,box-shadow,background-color,border-color] duration-200 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.985]
       `} >
       {loading || initialLoading ? (
         <FaSpinner className="animate-spin" />
@@ -92,7 +96,7 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
       ) : (
         <FaUserPlus />
       )}
-      <span>{loading || initialLoading ? "Loading..." : following ? "Following" : "Follow"}</span>
+      <span className="tracking-wide">{loading || initialLoading ? "Loading..." : following ? "Following" : "Follow"}</span>
     </button>
   );
 };

@@ -1,32 +1,3 @@
-// // app/api/notifications/route.ts
-// import { NextResponse, NextRequest } from "next/server";
-// import { NotificationService } from "../../../src/services/notification.service";
-// import { getCurrentUser } from "../../../src/lib/auth";
-
-// export async function GET(req: NextRequest) {
-//   try {
-//     // Get authenticated user from cookie
-//     const user = await getCurrentUser(req);
-
-//     if (!user) {
-//       console.warn("[API] Unauthorized request to fetch notifications");
-//       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//     }
-
-//     console.log(`[API] Fetching notifications for user ${user.id}`);
-
-//     // Fetch notifications from service
-//     const notifications = await NotificationService.getUserNotifications(user.id);
-
-//     return NextResponse.json({ notifications });
-//   } catch (err) {
-//     console.error("[API] Error fetching notifications:", err);
-//     return NextResponse.json(
-//       { error: "Failed to fetch notifications" },
-//       { status: 500 }
-//     );
-//   }
-// }
 
 // src/app/api/notifications/route.ts
 import { NextRequest, NextResponse } from "next/server";
@@ -69,11 +40,10 @@ export async function GET(req: NextRequest) {
 
     return notifications;
 
-  } catch (err: any) {
-    console.error("[Notifications API] ERROR:", {
-      message: err?.message,
-      stack: err?.stack,
-    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
+    console.error("[Notifications API] ERROR:", { message, stack });
 
     return NextResponse.json(
       { success: false, error: "Failed to fetch notifications" },

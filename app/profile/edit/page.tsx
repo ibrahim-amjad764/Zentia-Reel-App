@@ -18,11 +18,12 @@ import { Moon } from "lucide-react";
 import SearchSuggestions from "../../../src/components/notifications/SearchSuggestions";
 import ProfileDropdown from "../../../components/ui/dropdown-profile";
 import ProfileContent from "../../../src/components/membership/profile-page/ProfileContent";
-import ThemeDropdown from "../../../components/ui/dropdown-theme";
 import SearchBar from "../../../src/components/notifications/SearchBar";
 import Link from "next/link";
 import Loader from "../../../components/ui/Loader";
 import Image from "next/image";
+import { ModeToggleButton } from "../../../components/ui/mode-toggle";
+import { PremiumModeToggle } from "../../../components/ui/premium-mode-toggle";
 
 interface User {
   id: string;
@@ -44,13 +45,32 @@ interface FetchPostsResponse {
   hasMore: boolean;
 }
 const EditProfilePage = () => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{
+    id?: string;
+    firstName?: string;
+    lastName?: string;
+    email: string;
+    avatarUrl?: string;
+    bio?: string;
+    jobTitle?: string;
+    company?: string;
+    phone?: string;
+    location?: string;
+    website?: string;
+    github?: string;
+    linkedin?: string;
+    twitter?: string;
+    skills?: string[];
+    hobbies?: string[];
+  } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [openPost, setOpenPost] = useState(false);
   const [query, setQuery] = useState("")
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<
+    { id: string | number; username: string; email: string; firstName?: string; lastName?: string }[]
+  >([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [page, setPage] = useState(1);
   const debouncedQuery = useDebounce(query, 400);
@@ -120,7 +140,7 @@ const EditProfilePage = () => {
   }, []);
 
   // Save updated profile
-  const handleSave = async (updatedUser: any) => {
+  const handleSave = async (updatedUser: unknown) => {
     setIsSaving(true);
     try {
       await updateUserProfile(updatedUser);
@@ -159,97 +179,141 @@ const EditProfilePage = () => {
     }
   };
 
-  if (!user)
-    return <Loader title="Loading form..." subtitle="Preparing your profile data" size="lg" />;
+  // if (!user)
+  //   return <Loader title="Loading form..." subtitle="Preparing your profile data" size="lg" />;
 
+  if (!user) {
   return (
-    <SidebarProvider>
-      <div className="flex min-h-dvh w-full flex-col">
-
-        <header className="bg-card sticky top-0 z-50 border-b">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-2 sm:px-6">
-
-            <Link href="/feed" className="flex items-center gap-2">
-              <div className="w-[50px] h-[50px] rounded-full overflow-hidden">
-                <Image
-                  src="/logo.png"
-                  alt="Logo"
-                  width={50}
-                  height={50}
-                  className="object-cover w-full h-full scale-150" />
-              </div>
-              <span className="lg:text-lg font-extrabold text-black italic tracking-wider animate-pulse dark:text-slate-600">
-                Zentia
-              </span>
-            </Link>
-
-            <div className="relative w-full max-w-sm">
-              <SearchBar
-                value={query}
-                onChange={setQuery}
-                onSearch={handleSearch}
-                placeholder="Search users..." />
-
-              {(query || searchLoading) && (
-                <SearchSuggestions users={users} loading={searchLoading} query={query} />
-              )}
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <NotificationBell />
-
-              <ThemeDropdown
-                trigger={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
-                    <Moon className="size-5" />
-                  </Button>
-                } />
-
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => setOpenPost(true)}
-                className="transition-all duration-200 ease-in-out hover:scale-105 active:scale-95">
-                New Post
-              </Button>
-            </div>
-          </div>
-        </header>
-
-        <main className="flex-1">
-          <div className="min-h-screen bg-slate-200 text-gray-800 dark:bg-zinc-900 dark:text-gray-300">
-            <div className="max-w-4xl mx-auto px-4 py-10 space-y-6">
-
-              <div className="max-w-4xl mx-auto px-4 pt-6">
-                <Button
-                  variant="outline"
-                  onClick={handleBack}
-                  className="dark:bg-zinc-900 dark:hover:bg-zinc-700 transition-all duration-200 ease-in-out hover:scale-105 active:scale-95 text-md">
-                  ← Back
-                </Button>
-              </div>
-
-              <div>
-                <h2 className="text-2xl font-semibold">Edit profile</h2>
-                <p className="text-sm text-slate-400 mt-2 italic">
-                  Personal, Account, Security & Notifications. Changes reflect on your profile page.
-                </p>
-              </div>
-
-              <ProfileContent
-                user={user}
-                onSave={handleSave}
-                onCancel={handleBack}
-                isSaving={isSaving} />
-            </div>
-          </div>
-        </main>
-      </div>
-      <CreatePostModal open={openPost} onClose={() => setOpenPost(false)} />
-    </SidebarProvider>
+    <div className="flex items-center justify-center min-h-screen">
+      <Loader 
+        title="Loading profile..." 
+        subtitle="Preparing your profile data" 
+        size="lg" 
+      />
+    </div>
   );
+}
+return (
+  <SidebarProvider>
+    <div className="flex min-h-dvh w-full flex-col bg-[#F8FAFC] dark:bg-zinc-950">
+
+      {/* HEADER */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 dark:bg-zinc-900/70 border-b border-gray-200 dark:border-zinc-800">
+        <div className="mx-auto flex max-w-8xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+
+          {/* Logo */}
+          <Link href="/feed" className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 dark:border-zinc-700">
+              <Image
+                src="/logo.png"
+                alt="Logo"
+                width={40}
+                height={40}
+                className="object-cover w-full h-full"
+              />
+            </div>
+            <span className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
+              Zentia
+            </span>
+          </Link>
+
+          {/* Search */}
+          <div className="relative w-full max-w-md hidden sm:block">
+            <SearchBar
+              value={query}
+              onChange={setQuery}
+              onSearch={handleSearch}
+              placeholder="Search the universe..."
+            />
+
+            {(query || searchLoading) && (
+              <SearchSuggestions
+                users={users}
+                loading={searchLoading}
+                query={query}
+              />
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <NotificationBell />
+            <PremiumModeToggle/>
+
+            <Button
+              size="sm"
+              onClick={() => setOpenPost(true)}
+              className="rounded-full px-4 bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 transition-all active:scale-95"
+            >
+              New Post
+            </Button>
+          </div>
+        </div>
+
+        {/* Mobile Search */}
+        <div className="px-4 pb-3 sm:hidden">
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            onSearch={handleSearch}
+            placeholder="Search users..."
+          />
+
+          {(query || searchLoading) && (
+            <SearchSuggestions
+              users={users}
+              loading={searchLoading}
+              query={query}
+            />
+          )}
+        </div>
+      </header>
+
+      {/* MAIN */}
+      <main className="flex-1">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+
+          {/* Top Bar */}
+          <div className="flex items-center justify-between">
+            <Button
+              variant="outline"
+              onClick={handleBack}
+              className="rounded-full px-4 py-2 text-sm border-gray-300 dark:border-zinc-700 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all active:scale-95"
+            >
+              ← Back
+            </Button>
+          </div>
+
+          {/* Header Text */}
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">
+              Edit Profile
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+              Update your personal info, account settings, and preferences.
+            </p>
+          </div>
+
+          {/* Profile Card */}
+          <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl shadow-sm p-6 sm:p-8">
+            <ProfileContent
+              user={user}
+              onSave={handleSave}
+              onCancel={handleBack}
+              isSaving={isSaving}
+            />
+          </div>
+
+        </div>
+      </main>
+
+      {/* Modal */}
+      <CreatePostModal
+        open={openPost}
+        onClose={() => setOpenPost(false)}
+      />
+    </div>
+  </SidebarProvider>
+);
 };
 export default EditProfilePage;

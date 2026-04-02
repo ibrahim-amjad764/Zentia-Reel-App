@@ -1,46 +1,4 @@
 // // src/lib/notificationSocket.ts
-// import { useNotificationStore } from "../store/notificationStore";
-
-// let socket: WebSocket | null = null;
-
-// export const connectNotificationSocket = (userId: string) => {
-//   if (!userId) return;
-
-//   // Only connect once
-//   if (socket && socket.readyState === WebSocket.OPEN) return socket;
-
-//   // Replace with your backend WebSocket URL
-//   socket = new WebSocket(`ws://localhost:4000?userId=${userId}`);
-
-//   const store = useNotificationStore.getState();
-
-//   socket.onopen = () => {
-//     console.log("[WebSocket] Connected for user:", userId);
-//   };
-
-//   socket.onmessage = (event) => {
-//     try {
-//       const data = JSON.parse(event.data);
-//       console.log("[WebSocket] New notification received:", data);
-
-//       // Add notification to global store
-//       store.addNotification(data);
-//     } catch (err) {
-//       console.error("[WebSocket] Failed to parse message:", err);
-//     }
-//   };
-
-//   socket.onclose = () => {
-//     console.log("[WebSocket] Connection closed");
-//   };
-
-//   socket.onerror = (err) => {
-//     console.error("[WebSocket] Error:", err);
-//   };
-
-//   return socket;
-// };
-
 
 import { useNotificationStore } from "../store/notificationStore";
 

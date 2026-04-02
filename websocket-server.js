@@ -1,4 +1,3 @@
-// file 2
 import WebSocket, { WebSocketServer } from 'ws';
 import { AppDataSource } from './src/db/data-source.js';
 import { Comment } from './src/entities/comment.js';

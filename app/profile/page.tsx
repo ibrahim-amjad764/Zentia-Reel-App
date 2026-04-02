@@ -1,72 +1,4 @@
-// "use client";
 
-// import { useState, useEffect } from "react";
-// import Link from "next/link";
-// import { Button } from "../../components/ui/button";
-// import { useRouter } from "next/navigation";
-// import { toast } from "sonner";
-// import { fetchUserProfile, fetchMyPosts } from "../../app/api/profile-user/user";
-// import ProfileCard from "@/components/membership/profile-page/ProfileCard";
-// import ProfileHeader from "@/components/membership/profile-page/ProfileHeader";
-// import LogoutButton from "@/components/membership/logout-page-03/logout-form";
-// import Loader from "../../components/ui/Loader";
-
-// const ProfilePage = () => {
-//   const [user, setUser] = useState<any>(null);
-//   const [posts, setPosts] = useState<any[]>([]);
-//   const router = useRouter();
-
-//    useEffect(() => {
-//     document.title = "Profile | My Next JS App"
-//   }, [])
-
-//   useEffect(() => {
-//     const load = async () => {
-//       try {
-//         const [userProfile, { posts: myPosts }] = await Promise.all([
-//           fetchUserProfile(),
-//           fetchMyPosts(),
-//         ]);
-//         setUser(userProfile);
-//         setPosts(myPosts);
-//       } catch (error) {
-//         console.error("[ProfilePage] Fetch error:", error);
-//         toast.error("Failed to load profile. Please try again.");
-//       }
-//     };
-//     load();
-//   }, []);
-
-//   const handleEditProfile = () => router.push("/profile/edit");
-
-//   if (!user) return <Loader title="Loading profile..." subtitle="Fetching your account details" size="md" />;
-
-//   return (
-//     <div className="min-h-screen bg-slate-100 text-white">
-//       <div className="max-w-xl mx-auto px-4 py-10 space-y-9">
-//         {/* Home + Logout row */}
-//         <div className="flex items-center justify-between">
-//           <Button variant="outline" asChild className="text-gray-500 h-9 transition-all duration-200 ease-in-out hover:scale-105 active:scale-95">
-//             <Link href="/feed">Home</Link>
-//           </Button>
-//           <div className="w-22">
-//             <Button
-//               className="w-full bg-red-600 hover:bg-red-500 text-white rounded-md shadow-sm transition-all duration-200 ease-in-out hover:scale-105 active:scale-95" asChild>
-//               <LogoutButton />
-//             </Button>
-
-//           </div>
-//         </div>
-//         <ProfileHeader user={user} onEdit={handleEditProfile} showEditButton  />
-
-//         {/* Profile card + current user's posts */}
-//         <ProfileCard user={user} posts={posts} />
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default ProfilePage;
 
 
 // app/profile/page.tsx
@@ -92,12 +24,12 @@ import SearchSuggestions from "../../src/components/notifications/SearchSuggesti
 import ProfileDropdown from "../../components/ui/dropdown-profile";
 import ProfileContent from "../../src/components/membership/profile-page/ProfileContent";
 import ProfileHeader from "../../src/components/membership/profile-page/ProfileHeader";
-import ThemeDropdown from "../../components/ui/dropdown-theme";
 import ProfileCard from "../../src/components/membership/profile-page/ProfileCard";
 import SearchBar from "../../src/components/notifications/SearchBar";
 import Loader from "../../components/ui/Loader";
 import Image from "next/image";
 import Link from "next/link";
+import { PremiumModeToggle } from "../../components/ui/premium-mode-toggle";
 
 interface User {
   id: string;
@@ -236,7 +168,9 @@ const ProfilePage = () => {
   const searchParams = useSearchParams();
   const [openPost, setOpenPost] = useState(false);
    const [query, setQuery] = useState("")
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<
+    { id: string | number; username: string; email: string; firstName?: string; lastName?: string }[]
+  >([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const router = useRouter();
 const debouncedQuery = useDebounce(query, 400);
@@ -337,73 +271,141 @@ const debouncedQuery = useDebounce(query, 400);
   const handleEditProfile = () => router.push("/profile/edit");
 
   if (!user) {
-    return <Loader title="Loading profile..." subtitle="Fetching your account details" size="lg" />;
-  }
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <Loader 
+        title="Loading profile..." 
+        subtitle="Fetching your account details" 
+        size="lg" 
+      />
+    </div>
+  );
+}
 
-  const loadMorePosts = () => {
-    if (!loading && hasMore) setPage(prev => prev + 1);
-  };
+const loadMorePosts = async () => {
+  if (!loading && hasMore) {
+    setPage(prev => prev + 1);
+    setLoading(true);
+    // Your existing logic here
+    setLoading(false);
+  }
+};
+
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-dvh w-full flex-col">
-        <header className="bg-card sticky top-0 z-50 border-b">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-2 sm:px-6">
-            <Link href="/feed" className="flex items-center gap-2">
-              <div className="w-[50px] h-[50px] rounded-full overflow-hidden">
-                <Image
-                  src="/logo.png" alt="Logo" width={50} height={50}
-                  className="object-cover w-full h-full scale-150"/>
-              </div>
-              <span className="lg:text-lg font-extrabold text-black italic tracking-wider animate-pulse">
-                Zentia
-              </span>
-            </Link>
-             {/* Search */}
-        <div className="relative w-full max-w-sm">
+  <SidebarProvider>
+    <div className="flex min-h-dvh w-full flex-col bg-[#F8FAFC] dark:bg-zinc-950">
+
+      {/* HEADER */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 dark:bg-zinc-900/70 border-b border-gray-200 dark:border-zinc-800">
+        <div className="mx-auto flex max-w-8xl items-center justify-between gap-6 px-4 py-3 sm:px-6">
+
+          {/* Logo */}
+          <Link href="/feed" className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 dark:border-zinc-700">
+              <Image
+                src="/logo.png"
+                alt="Logo"
+                width={40}
+                height={40}
+                className="object-cover w-full h-full"
+              />
+            </div>
+            <span className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
+              Zentia
+            </span>
+          </Link>
+
+          {/* Search */}
+          <div className="relative w-full max-w-md hidden sm:block">
+            <SearchBar
+              value={query}
+              onChange={setQuery}
+              onSearch={handleSearch}
+              placeholder="Search the universe..."
+            />
+
+            {(query || searchLoading) && (
+              <SearchSuggestions
+                users={users}
+                loading={searchLoading}
+                query={query}
+              />
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <NotificationBell />
+            <PremiumModeToggle/>
+
+            <Button
+              size="sm"
+              onClick={() => setOpenPost(true)}
+              className="rounded-full px-4 bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 transition-all duration-200 active:scale-95"
+            >
+              New Post
+            </Button>
+          </div>
+        </div>
+
+        {/* Mobile Search */}
+        <div className="px-4 pb-3 sm:hidden">
           <SearchBar
             value={query}
             onChange={setQuery}
             onSearch={handleSearch}
-            placeholder="Search users..." />
+            placeholder="Search users..."
+          />
 
           {(query || searchLoading) && (
-            <SearchSuggestions users={users} loading={searchLoading} query={query} />
+            <SearchSuggestions
+              users={users}
+              loading={searchLoading}
+              query={query}
+            />
           )}
         </div>
+      </header>
 
-            <div className="flex items-center gap-1.5">
-              <NotificationBell />
-              <ThemeDropdown
-                trigger={
-                  <Button variant="ghost" size="icon" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
-                    <Moon className="size-5" />
-                  </Button>
-                }/>
-              <Button
-                size="sm" variant="secondary" onClick={() => setOpenPost(true)}
-                className="transition-all duration-200 ease-in-out hover:scale-105 active:scale-95">
-                New Post
-              </Button>
-            </div>
-          </div>
-        </header>
+      {/* MAIN */}
+<main className="flex-1 mt-4">
+  <div className="min-h-screen bg-slate-100 text-gray-900 dark:bg-zinc-950">
+    
+    {/* FULL WIDTH CONTAINER */}
+    <div className="w-full px-10 py-10 space-y-6">
 
-        <main className="flex-1 mt-4"> {/* ← mt-4 adds space under navbar */}
-          <div className="min-h-screen bg-slate-100 text-gray-900 dark:bg-zinc-950">
-            <div className="w-full px-10 py-10 space-y-6">
-              <div className="bg-gray-500/10 rounded-lg shadow-md p-6 space-y-4">
-                <ProfileHeader user={user} onEdit={handleEditProfile} showEditButton />
-                <ProfileCard posts={posts} hasMore={hasMore} loadMore={loadMorePosts} />
-              </div>
-            </div>
-          </div>
-        </main>
+      {/* Profile Section (BIG HEADER STYLE) */}
+      <div className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border border-white/20 dark:border-zinc-800 rounded-3xl shadow-xl p-8">
+        <ProfileHeader
+          user={user}
+          onEdit={handleEditProfile}
+          showEditButton
+        />
+      </div>
 
-        <CreatePostModal open={openPost} onClose={() => setOpenPost(false)} />
-          </div>
-    </SidebarProvider>
-  );
+      {/* Posts Section */}
+      <div className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border border-white/20 dark:border-zinc-800 rounded-3xl shadow-xl p-8">
+        <ProfileCard
+          posts={posts}
+          hasMore={hasMore}
+          loadMore={loadMorePosts}
+        />
+      </div>
+
+    </div>
+  </div>
+</main>
+
+      {/* Modal */}
+      <CreatePostModal
+        open={openPost}
+        onClose={() => setOpenPost(false)}
+      />
+    </div>
+  </SidebarProvider>
+);
+
 };
 
 export default ProfilePage;

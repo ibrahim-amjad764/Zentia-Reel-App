@@ -93,8 +93,9 @@ export async function POST(req: Request) {
     console.log("Saved User from DB:", savedUser);
 
     return NextResponse.json(savedUser);
-  } catch (err: any) {
-    console.error("Signup Error:", err?.message || err);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Signup Error:", message);
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 }

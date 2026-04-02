@@ -1,27 +1,15 @@
 "use client";
 
-import type { ReactNode } from "react";
-import Link from "next/link";
-import {
-  UserIcon,
-  SettingsIcon,
-  LogOutIcon,
-} from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./dropdown-menu";
 import { Avatar, AvatarImage, AvatarFallback } from "./avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "./dropdown-menu";
-import { logout } from "@/services/auth.service";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { UserIcon, SettingsIcon, LogOutIcon,} from "lucide-react";
 import { useState, useEffect } from "react";
 import { fetchUserProfile } from "../../app/api/profile-user/user";
+import type { ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { logout } from "@/services/auth.service";
+import { toast } from "sonner";
+import Link from "next/link";
 
 type Props = {
   trigger: ReactNode;
@@ -49,8 +37,10 @@ const ProfileDropdown = ({ trigger, defaultOpen, align = "end" }: Props) => {
       await logout();
       toast.success("Logout successful", { id: tid });
       router.push("/auth/login");
-    } catch (e: any) {
-      toast.error(e?.message || "Logout failed", { id: tid });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Logout failed";
+      console.error("[ProfileDropdown] Logout failed:", e);
+      toast.error(message, { id: tid });
     }
   };
 

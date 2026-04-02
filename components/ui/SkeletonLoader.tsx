@@ -1,8 +1,19 @@
 import { Skeleton } from "./skeleton";
 import { Card, CardHeader, CardContent } from "./card";
+import { Users, TrendingUp, Zap } from "lucide-react";
 
 export const SkeletonLoader = () => (
-  <div className="mx-auto max-w-xl flex flex-col gap-6 py-6">
+  <div className="mx-auto max-w-xl flex flex-col gap-6 py-8">
+         {/* Stats Bar Skeleton
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+      {[...Array(3)].map((_, index) => (
+        <div key={`stats-${index}`} className="glass-premium rounded-lg p-2 text-center">
+          <Skeleton className="w-5 h-5 mx-auto mb-1 rounded" />
+          <Skeleton className="h-6 w-16 mx-auto mb-1 rounded" />
+          <Skeleton className="h-3 w-20 mx-auto rounded" />
+        </div>
+      ))}
+    </div> */}
     {[...Array(5)].map((_, index) => (
       <Card key={index} className="shadow-md">
         {/* Header */}
@@ -16,7 +27,7 @@ export const SkeletonLoader = () => (
         </CardHeader>
 
         {/* Post content */}
-        <CardContent className="text-sm p-0 mt-1 flex flex-col gap-2">
+        <CardContent className="text-sm p-0 mt-2 flex flex-col gap-2">
           <Skeleton className="h-4 w-full rounded" />
           <Skeleton className="h-4 w-3/4 rounded" />
           {/* <Skeleton className="h-4 w-full rounded" /> */}

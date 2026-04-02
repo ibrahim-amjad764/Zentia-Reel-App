@@ -1,77 +1,3 @@
-// //src/components/membership/profile-page/ProfileTabs.tsx
-// "use client";
-
-// import { useState } from "react";
-// import Link from "next/link";
-// import PostItem from "../../posts/PostItem";
-
-// export default function ProfileTabs({
-//   posts,
-//   comments,
-//   likes,
-//   followers,
-//   following,
-// }: any) {
-//   const [active, setActive] = useState("posts");
-
-//   <ProfileTabs
-//   posts={mappedPosts}
-//   comments={mappedComments}
-//   likes={mappedLikes}
-//   followers={followers}
-//   following={following}
-// />
-//   return (
-//     <div>
-
-//       {/* TAB MENU */}
-//       <div className="flex gap-4 border-b pb-2">
-//         <button onClick={() => setActive("posts")}>Posts</button>
-//         <button onClick={() => setActive("comments")}>Comments</button>
-//         <button onClick={() => setActive("likes")}>Likes</button>
-//         <button onClick={() => setActive("followers")}>Followers</button>
-//         <button onClick={() => setActive("following")}>Following</button>
-//       </div>
-
-//       {/* POSTS */}
-//       {active === "posts" &&
-//         posts.map((p: any) => <PostItem key={p.id} post={p} />)}
-
-//       {/* COMMENTS */}
-//       {active === "comments" &&
-//         comments.map((c: any) => (
-//           <div key={c.id}>{c.content}</div>
-//         ))}
-
-//       {/* LIKES */}
-//       {active === "likes" &&
-//         likes.map((l: any) => (
-//           <div key={l.id}>Liked Post: {l.postId}</div>
-//         ))}
-
-//       {/* FOLLOWERS */}
-//       {active === "followers" &&
-//         followers.map((f: any) => (
-//           <Link key={f.id} href={`/profile/${f.id}`}>
-//             <div className="flex items-center gap-2 p-2 hover:bg-gray-100">
-//               <span>{f.firstName}</span>
-//             </div>
-//           </Link>
-//         ))}
-
-//       {/* FOLLOWING */}
-//       {active === "following" &&
-//         following.map((f: any) => (
-//           <Link key={f.id} href={`/profile/${f.id}`}>
-//             <div className="flex items-center gap-2 p-2 hover:bg-gray-100">
-//               <span>{f.firstName}</span>
-//             </div>
-//           </Link>
-//         ))}
-//     </div>
-//   );
-// }
-
 
 "use client";
 
@@ -155,22 +81,22 @@ export default function ProfileTabs({
   return (
     <div className="space-y-6">
       {/* Tab Menu */}
-      <div className="flex gap-48 border-b pb-2 overflow-x-auto scrollbar-hide">
+      <div className="flex gap-3 border-b border-white/10 pb-2 overflow-x-auto scrollbar-hide">
         {tabs.map((tab) => (
           <motion.button
             key={tab.key}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             className={`relative px-4 py-2 font-medium text-sm transition-colors duration-200 ${active === tab.key
-              ? "text-blue-600 font-semibold"
-              : "text-gray-500 hover:text-gray-700"
+              ? "text-primary font-semibold"
+              : "text-muted-foreground hover:text-foreground"
               }`}
             onClick={() => setActive(tab.key)} >
             {tab.label}
             {active === tab.key && (
               <motion.div
                 layoutId="underline"
-                className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded"
+                className="absolute bottom-0 left-0 w-full h-0.5 bg-linear-to-r from-[oklch(0.62_0.12_210)] to-[oklch(0.62_0.12_190)] rounded"
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}  />
             )}
           </motion.button>

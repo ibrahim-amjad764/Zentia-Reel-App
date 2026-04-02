@@ -24,7 +24,7 @@ interface EditProfileFormProps {
     skills?: string[];
     hobbies?: string[];
   };
-  onSave: (user: any) => Promise<void>
+  onSave: (user: unknown) => Promise<void>
   onCancel: () => void;
   isSaving: boolean;
 }
@@ -44,10 +44,27 @@ function isValidUrlMaybe(value: string) {
 }
 
 const EditProfileForm = ({ user, onSave, onCancel, isSaving }: EditProfileFormProps) => {
-  const [updatedUser, setUpdatedUser] = useState<any>({
+  const [updatedUser, setUpdatedUser] = useState<Record<string, unknown> & {
+    email?: string;
+    firstName?: string;
+    lastName?: string;
+    avatarUrl?: string;
+    bio?: string;
+    jobTitle?: string;
+    company?: string;
+    phone?: string;
+    location?: string;
+    website?: string;
+    github?: string;
+    linkedin?: string;
+    twitter?: string;
+    skillsText?: string;
+    hobbiesText?: string;
+    id?: string;
+  }>({
     ...user,
-    skillsText: (user.skills ?? []).join(", "),
-    hobbiesText: (user.hobbies ?? []).join(", "),
+    skillsText: ((user.skills ?? []) as string[]).join(", "),
+    hobbiesText: ((user.hobbies ?? []) as string[]).join(", "),
   });
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({}); // track touch event
@@ -93,7 +110,7 @@ const EditProfileForm = ({ user, onSave, onCancel, isSaving }: EditProfileFormPr
       const url = data?.urls?.[0];
       if (!url) throw new Error("Invalid upload response");
 
-      setUpdatedUser((u: any) => ({ ...u, avatarUrl: url }));
+      setUpdatedUser((u) => ({ ...u, avatarUrl: url }));
       toast.success("Avatar uploaded successfully!");
     } catch (err: any) {
       toast.error(err.message || "Avatar upload failed");
@@ -111,22 +128,22 @@ const EditProfileForm = ({ user, onSave, onCancel, isSaving }: EditProfileFormPr
         .filter(Boolean);
 
     return {
-      id: updatedUser.id,
-      firstName: updatedUser.firstName ?? "",
-      lastName: updatedUser.lastName ?? "",
-      email: updatedUser.email ?? "",
-      avatarUrl: updatedUser.avatarUrl ?? "",
-      bio: updatedUser.bio ?? "",
-      jobTitle: updatedUser.jobTitle ?? "",
-      company: updatedUser.company ?? "",
-      phone: updatedUser.phone ?? "",
-      location: updatedUser.location ?? "",
-      website: updatedUser.website ?? "",
-      github: updatedUser.github ?? "",
-      linkedin: updatedUser.linkedin ?? "",
-      twitter: updatedUser.twitter ?? "",
-      skills: toTags(updatedUser.skillsText ?? ""),
-      hobbies: toTags(updatedUser.hobbiesText ?? ""),
+      id: String(updatedUser.id ?? ""),
+      firstName: String(updatedUser.firstName ?? ""),
+      lastName: String(updatedUser.lastName ?? ""),
+      email: String(updatedUser.email ?? ""),
+      avatarUrl: String(updatedUser.avatarUrl ?? ""),
+      bio: String(updatedUser.bio ?? ""),
+      jobTitle: String(updatedUser.jobTitle ?? ""),
+      company: String(updatedUser.company ?? ""),
+      phone: String(updatedUser.phone ?? ""),
+      location: String(updatedUser.location ?? ""),
+      website: String(updatedUser.website ?? ""),
+      github: String(updatedUser.github ?? ""),
+      linkedin: String(updatedUser.linkedin ?? ""),
+      twitter: String(updatedUser.twitter ?? ""),
+      skills: toTags(String(updatedUser.skillsText ?? "")),
+      hobbies: toTags(String(updatedUser.hobbiesText ?? "")),
     };
   };
 
@@ -144,7 +161,7 @@ const EditProfileForm = ({ user, onSave, onCancel, isSaving }: EditProfileFormPr
   };
 
   return (
-    <Card className="p-6 bg-white backdrop-blur-lg shadow-lg rounded-lg border-4 border-gray-100 dark:border-white dark:bg-zinc-900/80 dark:border-zinc-700/50">
+    <Card className="p-6 bg-white backdrop-blur-lg shadow-lg rounded-lg border-4 border-gray-100 dark:bg-zinc-900/80 dark:border-zinc-700/50">
       <div className="flex flex-col gap-5">
         {/* Avatar */}
         <div className="flex flex-col gap-2">

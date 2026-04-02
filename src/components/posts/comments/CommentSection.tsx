@@ -46,8 +46,12 @@ export function TextareaButton({
         placeholder={placeholder}
         disabled={disabled}
         onKeyDown={onKeyDown}
-        className="h-15 w-full p-2 text-sm border-gray-300 rounded-md " />
-      <Button onClick={onSend} disabled={disabled || !value.trim()} className="transition-all duration-200 ease-in-out hover:scale-105 active:scale-95  dark:disabled:bg-blue-400 disabled:cursor-not-allowed">
+        className="h-20 w-full rounded-2xl surface-glass border border-white/12 text-foreground placeholder:text-muted-foreground/70 ring-neon" />
+      <Button
+        onClick={onSend}
+        disabled={disabled || !value.trim()}
+        className="rounded-full disabled:cursor-not-allowed"
+      >
         Send message
       </Button>
     </div>
@@ -343,13 +347,15 @@ const CommentSection = ({ postId, userId }: CommentSectionProps) => {
   };
 
   return (
-    <div className="comment-section bg-white dark:bg-zinc-900 rounded-xl shadow-md p-4 space-y-4">
-      <hr />
+    <div className="comment-section surface-glass rounded-2xl p-5 space-y-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-l italic font-semibold text-gray-900 dark:text-white">Comments</h3>
+        <h3 className="text-base font-semibold tracking-tight text-foreground">Comments</h3>
         <span
           className={`text-xs px-3 py-1 rounded-full font-medium ${connectionStatus === "connected"
-            ? "bg-green-500 text-white" : connectionStatus === "connecting" ? "bg-yellow-500 text-white" : "bg-red-500 text-white"} transition-all duration-300`}>
+            ? "bg-[oklch(0.80_0.10_165)] text-black"
+            : connectionStatus === "connecting"
+              ? "bg-[oklch(0.84_0.10_95)] text-black"
+              : "bg-[oklch(0.70_0.20_25)] text-white"} transition-all duration-300 shadow-[0_0_0_1px_oklch(1_0_0/12%)]`}>
           {connectionStatus === "connected" ? "● Live" : connectionStatus === "connecting" ? "Connecting..." : "Disconnected"}
         </span>
       </div>
@@ -358,40 +364,40 @@ const CommentSection = ({ postId, userId }: CommentSectionProps) => {
       <div className="space-y-4">
         {isLoading ? (
           <div className="flex gap-4 animate-pulse">
-            <div className="h-10 w-10 bg-gray-300 rounded-full"></div>
+            <div className="h-10 w-10 bg-white/10 rounded-full"></div>
             <div className="flex-1 space-y-2">
-              <div className="h-3 bg-gray-300 rounded w-1/2"></div>
-              <div className="h-2 bg-gray-300 rounded w-3/4"></div>
+              <div className="h-3 bg-white/10 rounded w-1/2"></div>
+              <div className="h-2 bg-white/10 rounded w-3/4"></div>
             </div>
           </div>
         ) : comments.length === 0 ? (
-          <div className="text-center text-gray-500 text-sm">No comments yet. Be the first to comment!</div>
+          <div className="text-center text-muted-foreground text-sm">No comments yet. Be the first to comment!</div>
         ) : (
           comments.map((comment, index) => (
             <div key={comment.id ?? `comment-${index}`} className="space-y-2">
-              <div className="flex gap-4 items-start p-1 bg-gray-100 dark:bg-zinc-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 ease-in-out">
+              <div className="flex gap-4 items-start p-3 bg-white/4 border border-white/10 rounded-2xl shadow-[0_20px_60px_-50px_rgba(0,0,0,0.85)] transition-[transform,background-color,border-color] duration-200 ease-out hover:bg-white/6 hover:border-white/14 hover:-translate-y-0.5">
                 <Avatar className="w-10 h-10">
                   <AvatarFallback>{comment.user.firstName?.[0]?.toUpperCase() || "U"}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex gap-1 items-center">
-                      <strong className="text-sm font-medium text-gray-600 dark:text-white">
+                      <strong className="text-sm font-medium text-foreground/90">
                         {comment.user.firstName} {comment.user.lastName || ""}
                       </strong>
                       {comment.createdAt && (
-                        <span className="text-xs text-gray-400 ml-50 italic">
+                        <span className="text-xs text-muted-foreground italic">
                           {new Date(comment.createdAt).toLocaleString()}
                         </span>
                       )}
                     </div>
                   </div>
-                  <p className="text-l text-gray-800  dark:text-gray-900 dark:text-white">{comment.content}</p>
+                  <p className="text-sm text-foreground/90">{comment.content}</p>
                 </div>
               </div>
               {/* Add hr between comments except after the last one */}
               {index !== comments.length - 1 && (
-                <hr className="border-gray-300 dark:border-gray-600" />
+                <hr className="border-white/10" />
               )}
             </div>
           ))

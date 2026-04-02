@@ -1,5 +1,6 @@
 // src/db/data-source.ts
 import { DataSource } from "typeorm";
+import "pg"; // Explicitly import PostgreSQL driver
 import { User } from "@entities/user";
 import { Post } from "@entities/post";
 import { Like } from "@entities/like";

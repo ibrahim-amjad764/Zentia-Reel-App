@@ -46,10 +46,11 @@ export async function GET(
     });
 
     return NextResponse.json({ following: !!existing });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
     console.error("[FOLLOW STATUS API] ERROR:", err);
     return NextResponse.json(
-      { error: "Failed to fetch follow status", details: err.message },
+      { error: "Failed to fetch follow status", details: message },
       { status: 500 }
     );
   }

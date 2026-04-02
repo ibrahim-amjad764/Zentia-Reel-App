@@ -15,8 +15,25 @@ import EditProfileForm from "./EditProfileForm";
 
 /** Props: user data, save/cancel handlers, saving state */
 interface ProfileContentProps {
-  user: any;
-  onSave: (user: any) => Promise<void>;
+  user: {
+    id?: string;
+    firstName?: string;
+    lastName?: string;
+    email: string;
+    avatarUrl?: string;
+    bio?: string;
+    jobTitle?: string;
+    company?: string;
+    phone?: string;
+    location?: string;
+    website?: string;
+    github?: string;
+    linkedin?: string;
+    twitter?: string;
+    skills?: string[];
+    hobbies?: string[];
+  };
+  onSave: (user: unknown) => Promise<void>;
   onCancel: () => void;
   isSaving: boolean;
 }

@@ -37,12 +37,22 @@ interface Post {
 
 interface ProfilePageClientProps {
   user: {
-    id: string;
+    id?: string;
     firstName?: string;
     lastName?: string;
     email: string;
     avatarUrl?: string;
     bio?: string;
+    jobTitle?: string;
+    company?: string;
+    phone?: string;
+    location?: string;
+    website?: string;
+    github?: string;
+    linkedin?: string;
+    twitter?: string;
+    skills?: string[];
+    hobbies?: string[];
     createdAt?: string;
     isActive?: boolean;
   };
@@ -71,7 +81,7 @@ export default function ProfilePageClient({
   const [loading, setLoading] = React.useState(false);
 
   const loadMorePosts = async () => {
-    if (loading || !hasMore) return;
+    if (loading || !hasMore || !user.id) return;
     setLoading(true);
 
     try {
@@ -107,9 +117,11 @@ export default function ProfilePageClient({
           Posts by {user.firstName || "User"} ({posts.length})
         </h3>
         {/* Follow button for the profile being viewed */}
-        <div className="my-2">
-          <FollowButton userId={user.id} />
-        </div>
+        {user.id && (
+          <div className="my-2">
+            <FollowButton userId={user.id} />
+          </div>
+        )}
         {posts.length === 0 ? (
           <p className="text-center text-gray-400 italic">No posts yet.</p>
         ) : (

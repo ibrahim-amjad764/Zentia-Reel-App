@@ -32,7 +32,7 @@ export const fetchUserProfile = async () => {
 };
 
 // Update profile with new data
-export const updateUserProfile = async (user: any) => {
+export const updateUserProfile = async (user: unknown) => {
   try {
     const res = await fetch("/api/profile-user/profile", {
       method: "PUT",

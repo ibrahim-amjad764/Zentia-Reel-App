@@ -4,7 +4,7 @@ import cloudinary from "../../../src/lib/cloudinary"; // your server-side Cloudi
 
 export async function POST(req: Request) {
   const formData = await req.formData();
-  const files = formData.getAll("file"); // all file from client
+  const files = formData.getAll("file").filter((file): file is File => file instanceof File); // all files from client
 
   if (!files || files.length === 0) {
     console.log("No images uploaded");
@@ -19,11 +19,11 @@ export async function POST(req: Request) {
   try {
 
     // Convert each File/Blob to a buffer and upload via stream
-    const uploadPromises = files.map(async (file: any) => {
+    const uploadPromises = files.map(async (file: File) => {
       //buffer handle binary data
-      const buffer = Buffer.from(await (file as Blob).arrayBuffer());
+      const buffer = Buffer.from(await file.arrayBuffer());
 
-      const result = await new Promise<any>((resolve, reject) => {
+      const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           { folder: "posts", resource_type: "image" },
           (error, result) => {
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
             }
             if (result) {
               console.log("Image uploaded successfully:", result.secure_url); // server-side success log
-              resolve(result);
+              resolve({ secure_url: result.secure_url });
             } else {
               reject(new Error("Upload result is undefined"));
             }

@@ -77,7 +77,10 @@ export async function GET(req: Request) {
     }
 
     // build filtering clause
-    let whereClause: any = undefined;
+    let whereClause:
+      | { user: { id: string } }
+      | { user: { email?: string } }
+      | undefined = undefined;
     if (userIdParam) {
       whereClause = { user: { id: userIdParam } };
     } else if (mine) {

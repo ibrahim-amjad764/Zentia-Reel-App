@@ -108,9 +108,19 @@ export const LikeButton = ({
         onClick={() => likeMutation.mutate()}
         disabled={likeMutation.isPending}
         className={`${
-          isLiked ? "text-red-500" : "text-gray-800 hover:text-red-500"} dark:text-white dark:hover:text-red-500 flex items-center transition-colors duration-200 ease-in-out hover:scale-105 active:scale-95`}>
-        <Heart className={`h-4 w-4 mr-1 ${isLiked ? "fill-current" : ""}`} />
-        {likesCount} {likesCount === 1 ? "Like" : "Likes"}
+          isLiked ? "text-red-500" : "text-foreground/80 hover:text-red-500"
+        } flex items-center rounded-full transition-[transform,background-color,color] duration-200 ease-out hover:bg-red-500/10 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.985]`}
+      >
+        <motion.span
+          key={String(isLiked)}
+          initial={{ scale: 0.96, opacity: 0.6 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.18 }}
+          className="inline-flex items-center"
+        >
+          <Heart className={`h-4 w-4 mr-1 ${isLiked ? "fill-current" : ""}`} />
+          {likesCount} {likesCount === 1 ? "Like" : "Likes"}
+        </motion.span>
       </Button>
       </div>
     // </motion.div>

@@ -140,7 +140,7 @@
 
 
 
-"use Client";
+"use client";
 
 import { useEffect, useState, useRef } from "react";
 import { Bell } from "lucide-react";
@@ -163,7 +163,7 @@ export function NotificationBell() {
   // Auto shake every 10 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      console.log("[NotificationBell]  Auto shake triggered (every 10s)");
+      // console.log("[NotificationBell]  Auto shake triggered (every 10s)");
       setShake(true);
       setTimeout(() => {
         setShake(false);
@@ -276,13 +276,13 @@ export function NotificationBell() {
     <div className="relative">
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className="relative group transition-transform duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full"
+        className="relative group rounded-full transition-[transform,filter] duration-200 ease-out hover:scale-[1.03] hover:brightness-110 active:scale-[0.98] ring-neon"
         aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
         aria-haspopup="true"
         aria-expanded={open}
       >
         <Bell
-          className={`h-6 w-6 text-gray-600 transition-all duration-300 group-hover:text-blue-600 group-active:scale-95 ${shake ? "animate-premium-shake" : ""
+          className={`h-6 w-6 text-foreground/80 transition-[color,transform,filter] duration-300 group-hover:text-primary group-active:scale-95 ${shake ? "animate-premium-shake" : ""
             }`}
           style={{
             animation: shake ? 'premium-shake 2s ease-in-out' : 'none'
@@ -292,7 +292,7 @@ export function NotificationBell() {
 
         {unreadCount > 0 && (
           <span
-            className={`absolute -top-1.5 -right-1.5 min-w-[20px] h-5 text-xs font-bold bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-full flex items-center justify-center px-1.5 shadow-lg transition-all duration-300  ${
+            className={`absolute -top-1.5 -right-1.5 min-w-[20px] h-5 text-xs font-bold bg-linear-to-r from-[oklch(0.78_0.13_200)] to-[oklch(0.72_0.16_305)] text-black rounded-full flex items-center justify-center px-1.5 shadow-[0_0_0_1px_oklch(1_0_0/18%),0_25px_70px_-50px_var(--fx-glow-cyan)] transition-[transform,filter] duration-300  ${
               bounce || continuousBounce ? "slow-bounce" : ""
             }`}
             // style={{
@@ -306,7 +306,7 @@ export function NotificationBell() {
 
         {/* Subtle glow effect for active state */}
        {open && (
-          <div className="absolute inset-0 rounded-full bg-blue-400 opacity-20 animate-pulse" />
+          <div className="absolute inset-0 rounded-full bg-primary/20 blur-md animate-pulse" />
         )}
       </button>
 

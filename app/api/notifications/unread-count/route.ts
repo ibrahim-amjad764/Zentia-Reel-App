@@ -37,9 +37,11 @@ export async function GET(req: NextRequest) {
       { status: 200 }
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    const stack = error instanceof Error ? error.stack : undefined;
     console.error("[API] Failed to fetch unread notification count");
-    console.error({ message: error?.message, stack: error?.stack,});
+    console.error({ message, stack });
 
     return NextResponse.json(
       {

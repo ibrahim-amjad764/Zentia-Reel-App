@@ -1,127 +1,79 @@
 // //firebase-admin.ts
-// // Lazy initialization pattern for Firebase Admin SDK
-// import admin from "firebase-admin";
-
-// // Store initialized state privately
-// let _isInitialized = false;
-
-// // Function to properly format the private key
-// function formatPrivateKey(key: string | undefined): string {
-//   // Validate key exists first
-//   if (!key || key.trim() === "") {
-//     throw new Error("FIREBASE_PRIVATE_KEY is not defined or empty in environment variables");
-//   }
-
-//   // Log first few chars for debugging (truncated for security)
-//   console.log("Processing Private Key...");
-//   console.log("Raw key starts with:", key.substring(0, Math.min(30, key.length)));
-
-//   // First replace escaped newlines (\n) with actual newlines
-//   let formattedKey = key.replace(/\\n/g, '\n');
-
-//   // Also replace \r\n with \n for Windows line endings
-//   formattedKey = formattedKey.replace(/\r\n/g, '\n');
-
-//   // Check if PEM headers exist; add them if missing
-//   if (!formattedKey.includes('-----BEGIN PRIVATE KEY-----')) {
-//     console.warn("PEM header missing, adding default headers...");
-//     // The key appears to be raw base64, wrap it in PEM format
-//     formattedKey = `-----BEGIN PRIVATE KEY-----\n${formattedKey}\n-----END PRIVATE KEY-----`;
-//   }
-
-//   // Verify the key can be parsed
-//   if (!formattedKey.includes('-----BEGIN PRIVATE KEY-----') || 
-//       !formattedKey.includes('-----END PRIVATE KEY-----')) {
-//     console.error("Private key format is invalid after processing");
-//     throw new Error("Invalid private key format - missing PEM headers");
-//   }
-
-//   return formattedKey;
-// }
-
-// // Function to initialize Firebase Admin SDK
-// function initializeFirebaseAdmin(): void {
-//   if (_isInitialized) return;
-  
-//   if (!admin.apps.length) {
-//     try {
-//       // Validate required environment variables
-//       const projectId = process.env.FIREBASE_PROJECT_ID;
-//       const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-//       const privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
-
-//       if (!projectId) {
-//         throw new Error("FIREBASE_PROJECT_ID is not defined in environment variables");
-//       }
-//       if (!clientEmail) {
-//         throw new Error("FIREBASE_CLIENT_EMAIL is not defined in environment variables");
-//       }
-
-//       admin.initializeApp({
-//         credential: admin.credential.cert({
-//           projectId: projectId,
-//           clientEmail: clientEmail,
-//           privateKey: privateKey,
-//         })
-//       });
-      
-//       _isInitialized = true;
-//       console.log("Firebase Admin SDK initialized successfully");
-//     } catch (error) {
-//       console.error("Failed to initialize Firebase Admin SDK:", error);
-//       throw error;
-//     }
-//   }
-// }
-// export default admin; 
-
-
 
 import admin from "firebase-admin";
 
-let _isInitialized = false;
+/**
+ * Global cache to prevent re-initialization in dev (Next.js hot reload fix)
+ */
+const globalForFirebase = global as unknown as {
+  firebaseAdmin?: admin.app.App;
+};
 
-function initializeFirebaseAdmin(): void {
-  if (_isInitialized) return;
+function initializeFirebaseAdmin(): admin.app.App {
+  // ✅ Reuse existing instance (IMPORTANT for Next.js)
+  if (globalForFirebase.firebaseAdmin) {
+    console.log("[Firebase Admin] Reusing existing instance");
+    return globalForFirebase.firebaseAdmin;
+  }
 
-  if (!admin.apps.length) {
-    try {
-      // Get Firebase credentials from environment variables
-      const projectId = process.env.FIREBASE_PROJECT_ID;
-      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-      const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  if (admin.apps.length > 0) {
+    console.log("[Firebase Admin] Using existing admin.apps instance");
+    globalForFirebase.firebaseAdmin = admin.app();
+    return globalForFirebase.firebaseAdmin;
+  }
 
-      // Validate required environment variables
-      if (!projectId) {
-        throw new Error("FIREBASE_PROJECT_ID is not defined in environment variables");
-      }
-      if (!clientEmail) {
-        throw new Error("FIREBASE_CLIENT_EMAIL is not defined in environment variables");
-      }
-      if (!privateKey) {
-        throw new Error("FIREBASE_PRIVATE_KEY is not defined in environment variables");
-      }
+  try {
+    console.log("[Firebase Admin] Initializing new instance...");
 
-      // Format private key (replace \n with actual newlines)
-      const formattedPrivateKey = privateKey.replace(/\\n/g, '\n');
+    const {
+      FIREBASE_PROJECT_ID,
+      FIREBASE_CLIENT_EMAIL,
+      FIREBASE_PRIVATE_KEY,
+    } = process.env;
 
-      // Initialize Firebase
-      admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId: projectId,
-          clientEmail: clientEmail,
-          privateKey: formattedPrivateKey,
-        }),
-      });
-
-      _isInitialized = true;
-      console.log("Firebase Admin SDK initialized successfully");
-    } catch (error) {
-      console.error("Failed to initialize Firebase Admin SDK:", error);
-      throw error;
+    // ✅ Strong validation (fail fast)
+    if (!FIREBASE_PROJECT_ID || !FIREBASE_CLIENT_EMAIL || !FIREBASE_PRIVATE_KEY) {
+      console.error("[Firebase Admin] Missing environment variables");
+      throw new Error("Firebase Admin env variables are not properly configured");
     }
+
+    const app = admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: FIREBASE_PROJECT_ID,
+        clientEmail: FIREBASE_CLIENT_EMAIL,
+        privateKey: FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+      }),
+    });
+
+    globalForFirebase.firebaseAdmin = app;
+
+    console.log("[Firebase Admin] Initialized successfully");
+
+    return app;
+  } catch (error) {
+    console.error("[Firebase Admin] Initialization failed:", error);
+    throw error;
   }
 }
 
-initializeFirebaseAdmin();
+// ✅ Initialize once
+const firebaseAdminApp = initializeFirebaseAdmin();
+
 export default admin;
+export { firebaseAdminApp };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

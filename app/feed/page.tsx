@@ -1,403 +1,50 @@
-// "use client";
-
-// import React, { useState, useEffect, useRef } from "react";
-// import Image from "next/image";
-// import Link from "next/link";
-// import InfiniteScroll from "react-infinite-scroll-component";
-// import { useQuery } from "@tanstack/react-query";
-// import { Heart, MessageCircle, Share2, Moon } from "lucide-react";
-// import { Card, CardContent, CardFooter, CardHeader } from "../../components/ui/card";
-// import { Avatar, AvatarFallback } from "../../components/ui/avatar";
-// import { Button } from "../../components/ui/button";
-// import { SidebarProvider } from "../../components/ui/sidebar";
-// import ThemeDropdown from "../../components/ui/dropdown-theme";
-// import ProfileDropdown from "../../components/ui/dropdown-profile";
-// import { SkeletonLoader } from "../../components/ui/SkeletonLoader";
-// import { renderUser } from "../../src/types/renderUser";
-// import { Loader2 } from "lucide-react";
-// import { CreatePostModal } from "../../src/components/posts/CreatePostModal";
-// import { toast } from "sonner";
-// import { auth } from "@/lib/firebase"; 
-// import { getFirebaseToken, authFetch } from "@/services/auth.service"; 
-
-// interface User {
-//   id: string;
-//   firstName?: string | null;
-//   lastName?: string | null;
-//   email: string;
-// }
-
-// interface Post {
-//   id: string;
-//   content: string;
-//   images?: string[];
-//   createdAt: string;
-//   user: User;
-//   time?: string;
-// }
-
-// interface FetchPostsResponse {
-//   posts: Post[];
-//   hasMore: boolean;
-// }
-
-// // Fetch posts from API (uses authFetch to auto-refresh token on 401)
-// const fetchPosts = async (page: number): Promise<FetchPostsResponse> => {
-//   const res = await authFetch(`/api/posts?page=${page}&limit=5`);
-//   if (!res.ok) throw new Error("Failed to fetch posts");
-//   const data = await res.json();
-//   if (Array.isArray(data)) return { posts: data, hasMore: true };
-//   return { posts: data.posts || [], hasMore: data.hasMore || false };
-// };
-
-// export default function FeedPage() {
-//   const [page, setPage] = useState(1);
-//   const [allPosts, setAllPosts] = useState<Post[]>([]);
-//   const [hasMore, setHasMore] = useState(true);
-//   const [activeIndices, setActiveIndices] = useState<Record<string, number>>({});
-//   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
-//   const [delayedLoading, setDelayedLoading] = useState(true);
-//   const [openPost, setOpenPost] = useState(false);
-
-
-
-//   const { data, isLoading, isError } = useQuery<FetchPostsResponse>({
-//     queryKey: ["posts", page],
-//     queryFn: () => fetchPosts(page),
-//     retry: 2,
-//     placeholderData: (prev) => prev,
-//   });
-
-//   // Update posts when data changes
-//   useEffect(() => {
-//     if (!data?.posts) return;
-//     setHasMore(data.hasMore);
-//     setAllPosts((prev) => (page === 1 ? data.posts : [...prev, ...data.posts]));
-//   }, [data, page]);
-
-//   // Simulate loading delay
-//   useEffect(() => {
-//     if (!isLoading && !isError) {
-//       const timer = setTimeout(() => setDelayedLoading(false), 1000);
-//       return () => clearTimeout(timer);
-//     }
-//   }, [isLoading, isError]);
-
-//   // Image carousel handlers
-//   const nextImage = (postId: string, length: number) =>
-//     setActiveIndices((prev) => ({ ...prev, [postId]: Math.min((prev[postId] ?? 0) + 1, length - 1) }));
-//   const prevImage = (postId: string) =>
-//     setActiveIndices((prev) => ({ ...prev, [postId]: Math.max((prev[postId] ?? 0) - 1, 0) }));
-
-//   // Load more posts on scroll
-//   const loadMorePosts = () => {
-//     if (hasMore) setPage((prev) => prev + 1);
-//   };
-
-//   // Handle like functionality
-// // Handle the like functionality for a post
-// const handleLike = async (postId: string) => {
-//   try {
-//     const user = auth.currentUser;
-//     if (!user) {
-//       // Check if user is logged in
-//       alert("You need to be logged in to like posts.");
-//       return;
-//     }
-
-//     const token = await user.getIdToken(true); // Get the fresh Firebase token
-
-//     // Send a POST request to like the post
-//     const response = await fetch("/api/posts/like", {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//         Authorization: `Bearer ${token}`, // Include the token for authentication
-//       },
-//       body: JSON.stringify({ postId }), // Send the postId to identify which post to like
-//     });
-
-//     if (response.ok) {
-//       setLikedPosts((prev) => new Set(prev).add(postId)); // Update liked posts in the state
-//       console.log(`Post ${postId} liked successfully.`);
-//     } else {
-//       // Handle errors from the API
-//       const error = await response.json();
-//       toast(error.message || "Error liking post");
-//     }
-//   } catch (error) {
-//     console.error("Error liking the post:", error);
-//     toast("Something went wrong. Please try again.");
-//   }
-// };
-
-//   const posts = allPosts;
-
-//   const mainContent = isLoading || delayedLoading ? (
-//     <SkeletonLoader />
-//   ) : isError ? (
-//     <p className="text-center py-10">Something went wrong.</p>
-//   ) : posts.length === 0 ? (
-//     <p className="text-center py-10">No posts yet.</p>
-//   ) : (
-//     <InfiniteScroll
-//       dataLength={posts.length}
-//       next={loadMorePosts}
-//       hasMore={hasMore}
-//       scrollThreshold={0.9}
-//       loader={
-//         <div className="flex justify-center my-4">
-//           <Loader2 className="h-8 w-8 animate-spin" />
-//         </div>
-//       }
-//       endMessage={<p className="flex justify-center py-4">No more posts to show</p>}
-//     >
-//       {posts.map((post, index) => {
-//         const activeIndex = activeIndices[post.id] ?? 0;
-//         const safeUser = {
-//           ...post.user,
-//           firstName: post.user.firstName ?? "Anonymous",
-//           lastName: post.user.lastName ?? "",
-//         };
-//         const isLiked = likedPosts.has(post.id);
-
-//         return (
-//           <Card key={post.id + "-" + index} className="shadow-md mb-6">
-//             <CardHeader className="flex flex-row items-start gap-3">
-//               <Avatar>
-//                 <AvatarFallback>{safeUser.email[0]?.toUpperCase()}</AvatarFallback>
-//               </Avatar>
-//               <div className="flex flex-col">
-//                 <p className="text-sm font-semibold">{renderUser(safeUser)}</p>
-//                 <p className="text-xs text-muted-foreground">
-//                   {post.time ?? new Date(post.createdAt).toLocaleDateString()}
-//                 </p>
-//                 <CardContent className="text-sm p-0 mt-1">{post.content}</CardContent>
-//               </div>
-//             </CardHeader>
-
-//             {post.images?.length ? (
-//               <div className="relative w-full h-[300px]">
-//                 <Image
-//                   src={post.images[activeIndex]}
-//                   alt="Post image"
-//                   fill
-//                   className="object-cover"
-//                   loading="eager"
-//                 />
-//                 {post.images.length > 1 && (
-//                   <div className="absolute inset-0 flex items-center justify-between px-2">
-//                     <Button size="sm" variant="secondary" onClick={() => prevImage(post.id)} disabled={activeIndex === 0}>
-//                       ‹
-//                     </Button>
-//                     <Button
-//                       size="sm"
-//                       variant="secondary"
-//                       onClick={() => nextImage(post.id, post.images!.length)}
-//                       disabled={activeIndex === post.images.length - 1}
-//                     >
-//                       ›
-//                     </Button>
-//                   </div>
-//                 )}
-//               </div>
-//             ) : null}
-
-//             <CardFooter className="flex justify-around border-t">
-//               <Button
-//                 variant="ghost"
-//                 size="sm"
-//                 onClick={() => handleLike(post.id)}
-//                 disabled={isLiked}
-//               >
-//                 <Heart className="h-4 w-4 mr-1" />
-//                 {isLiked ? "Liked" : "Like"}
-//               </Button>
-//               <Button variant="ghost" size="sm">
-//                 <MessageCircle className="h-4 w-4 mr-1" /> Comment
-//               </Button>
-//               <Button variant="ghost" size="sm">
-//                 <Share2 className="h-4 w-4 mr-1" /> Share
-//               </Button>
-//             </CardFooter>
-//           </Card>
-//         );
-//       })}
-//     </InfiniteScroll>
-//   );
-
-//   return (
-//     <SidebarProvider>
-//       <div className="flex min-h-dvh w-full flex-col">
-//         <header className="bg-card sticky top-0 z-50 border-b">
-//           <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-2 sm:px-6">
-//             <Link href="/feed" className="flex items-center gap-2">
-//               <div className="w-[50px] h-[50px] rounded-full overflow-hidden">
-//                 <Image src="/logo.png" alt="Logo" width={50} height={50} className="object-cover w-full h-full scale-150" />
-//               </div>
-//               <span className="lg:text-lg font-extrabold text-black italic tracking-wider animate-pulse">Zentia</span>
-//             </Link>
-
-//             <div className="flex items-center gap-1.5">
-//               <ThemeDropdown trigger={<Button variant="ghost" size="icon"><Moon className="size-8" /></Button>} />
-//               <Button size="sm" variant="secondary" onClick={() => setOpenPost(true)} className="transition-all duration-200 ease-in-out hover:scale-105 active:scale-95">
-//                 New Post
-//               </Button>
-//               <ProfileDropdown trigger={<Button variant="ghost" size="icon"><Avatar><AvatarFallback>U</AvatarFallback></Avatar></Button>} />
-//             </div>
-//           </div>
-//         </header>
-//         <main className="mx-auto w-full max-w-xl flex-1 px-4 py-6 sm:px-6">{mainContent}</main>
-//       </div>
-
-//       <CreatePostModal open={openPost} onClose={() => setOpenPost(false)} />
-//     </SidebarProvider>
-//   );
-// }
-
-
 "use client";
 
+/**
+ * Zentia Feed Page Component
+ * 
+ * Purpose: Provides a dynamic, infinite-scrolling social feed with image carousels,
+ * search functionality, real-time stats, and interactive post features.
+ * 
+ * Features:
+ * - Dynamic Stats Bar with glassmorphism
+ * - Infinite scrolling for performance
+ * - Multi-image carousel with indicators
+ * - Integrated Notification and Search systems
+ * - Premium UI/UX with Framer Motion animations
+ */
+
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import InfiniteScroll from "react-infinite-scroll-component";
+import Image from "next/image";
+import Link from "next/link";
+// UI Components
 import { Card, CardContent, CardFooter, CardHeader } from "../../components/ui/card";
-import { useState, useEffect, KeyboardEvent } from "react";
-import { Heart, MessageCircle, Share2, Moon } from "lucide-react";
-import { getFirebaseToken, authFetch } from "../../src/services/auth.service";
 import { Avatar, AvatarFallback } from "../../components/ui/avatar";
-import { NotificationBell } from "../../src/components/notifications/NotificationBell";
-import { CreatePostModal } from "../../src/components/posts/CreatePostModal";
+import { PremiumModeToggle } from "../../components/ui/premium-mode-toggle";
+import { ModeToggleButton } from "../../components/ui/mode-toggle";
 import { SidebarProvider } from "../../components/ui/sidebar";
 import { SkeletonLoader } from "../../components/ui/SkeletonLoader";
+import { Button } from "../../components/ui/button";
+import ProfileDropdown from "../../components/ui/dropdown-profile";
+// Icons
+import { MessageCircle, Heart, Share2, Plus, Sparkles, TrendingUp, Users, Zap, Loader2, ChevronLeft, ChevronRight, Search} from "lucide-react";
+// Domain Components & Services
+import { NotificationBell } from "../../src/components/notifications/NotificationBell";
+import { CreatePostModal } from "../../src/components/posts/CreatePostModal";
 import { FollowButton } from "../../src/components/membership/profile-page/FollowButton";
-import { ShareButton } from "../../src/components/posts/Share/ShareButton";
 import { searchUsers } from "../../src/services/user.service";
 import { useDebounce } from "../../src/lib/useDebounce";
-import { renderUser } from "../../src/types/renderUser";
 import { LikeButton } from "../../src/components/posts/likes/LikeButton";
-import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
-import { Button } from "../../components/ui/button";
-import { toast } from "sonner";
+import { authFetch } from "../../src/services/auth.service";
 import { auth } from "../../src/lib/firebase";
 import SearchSuggestions from "../../src/components/notifications/SearchSuggestions";
-import ProfileDropdown from "../../components/ui/dropdown-profile";
-import InfiniteScroll from "react-infinite-scroll-component";
 import CommentSection from "../../src/components/posts/comments/CommentSection";
-import ThemeDropdown from "../../components/ui/dropdown-theme";
-import SearchBar from "../../src/components/notifications/SearchBar"
-import Image from "next/image";
-import Link from "next/link"; // Import Link here
-
-// FeedPost displaying content and comments
-const FeedPost = ({
-  post,
-  activeIndex,
-  isCommentSectionVisible,
-  userId,
-  likedPosts,
-  handleCommentButtonClick,
-  nextImage,
-  prevImage,
-}: {
-  post: Post;
-  activeIndex: number;
-  isCommentSectionVisible: boolean;
-  userId: string;
-  likedPosts: Set<string>;
-  handleLike: (postId: string) => void;
-  handleCommentButtonClick: () => void;
-  nextImage: (postId: string, length: number) => void;
-  prevImage: (postId: string) => void;
-}) => {
-  const isLiked = likedPosts.has(post.id);
-
-  const renderUser = (user: User) => {
-    const fullName = `${user.firstName ?? 'Anonymous'} ${user.lastName ?? ''}`.trim();
-    return fullName;
-  };
-
-  return (
-    <Card key={post.id} className="shadow-md mb-6 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800 transition-all duration-300 hover:shadow-xl hover:scale-[1.001]">
-      <CardHeader className="flex items-start justify-between gap-3 p-4">
-        {/* Left: Avatar + Username */}
-        <div className="flex justify-between items-center w-full">
-          {/* Left side: Avatar + user info */}
-          <div className="flex items-center gap-3">
-            <Link
-              href={`/profile/${post.user.id}`}
-              className="cursor-pointer"
-              onClick={() => console.log(`[Profile Click] Avatar clicked for userId: ${post.user.id}`)}>
-              <Avatar>
-                {/* <AvatarFallback>{post.user.email[0]?.toUpperCase()}</AvatarFallback> */}
-                <AvatarFallback> {post.user.email ? post.user.email[0].toUpperCase() : "?"}</AvatarFallback>
-              </Avatar>
-            </Link>
-
-            <div className="flex flex-col">
-              <Link
-                href={`/profile/${post.user.id}`}
-                className="text-sm font-semibold cursor-pointer hover:underline transition-transform duration-200 ease-in-out transform origin-top active:scale-95"
-                onClick={() => console.log(`[Profile Click] Username clicked for userId: ${post.user.id}`)} >
-                {renderUser(post.user)}
-              </Link>
-              <p className="text-xs text-muted-foreground">
-                {post.time ?? new Date(post.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
-
-          <div>
-            <FollowButton userId={post.user.id} />
-          </div>
-        </div>
-      </CardHeader>
-
-
-      {/* Post Content below */}
-      <CardContent className="text-sm italic mt-1">{post.content}</CardContent>
-
-      {post.images?.length ? (
-        <div className="relative w-full h-[300px]">
-          <Image
-            src={post.images?.[activeIndex] || ""} // Ensure a valid image path
-            alt="Post image"
-            fill
-            className="object-cover"
-            loading="eager" />
-          {post.images.length > 1 && (
-            <div className="absolute inset-0 flex items-center justify-between px-2">
-              <Button size="default" variant="secondary" onClick={() => prevImage(post.id)} disabled={activeIndex === 0}>
-                ‹
-              </Button>
-              <Button
-                size="default"
-                variant="secondary"
-                onClick={() => nextImage(post.id, post.images?.length ?? 0)}
-                disabled={activeIndex === (post.images?.length ?? 0) - 1} >
-                ›
-              </Button>
-            </div>
-          )}
-        </div>
-      ) : null}
-
-      <CardFooter className="flex justify-around border-t">
-        <LikeButton
-          postId={post.id}
-          initialIsLiked={isLiked} // true/false if the current user liked it
-          initialLikesCount={post.likesCount || 0}  // pass the likesCount to the button
-          userId={userId} /> 
-
-        <Button variant="ghost" size="sm" onClick={handleCommentButtonClick} className="flex items-center text-gray-800 hover:text-blue-500  dark:text-white dark:hover:text-blue-500 transition-all duration-200 ease-in-out hover:scale-105 active:scale-95">
-          <MessageCircle className="h-4 w-4 mr-1 " /> Comment
-        </Button>
-        {/* <ShareButton /> */}
-      </CardFooter>
-      {isCommentSectionVisible && (
-        <CommentSection postId={post.id} userId={userId} />
-      )}
-    </Card>
-  );
-};
+import SearchBar from "../../src/components/notifications/SearchBar";
+// --- Interfaces ---
 
 interface User {
   id: string;
@@ -421,28 +68,222 @@ interface FetchPostsResponse {
   hasMore: boolean;
 }
 
+interface SearchUser {
+  id: string | number;
+  username: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+// --- API Service Functions ---
+/** Fetch posts from the server with pagination support */
 const fetchPosts = async (page: number): Promise<FetchPostsResponse> => {
   try {
+    console.log(`[API] Fetching posts for page ${page}...`);
     const res = await authFetch(`/api/posts?page=${page}&limit=5`);
-    if (!res.ok) {
-      throw new Error(`Failed to fetch posts: ${res.status} ${res.statusText}`);
-    }
+
+    if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
 
     const contentType = res.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      throw new Error("Expected JSON response but received HTML");
-    }
+    if (!contentType?.includes("application/json")) throw new Error("Expected JSON, got something else.");
 
     const data = await res.json();
+    console.log(`[API] Posts received: ${Array.isArray(data) ? data.length : data.posts?.length || 0}`);
+
     if (Array.isArray(data)) return { posts: data, hasMore: true };
     return { posts: data.posts || [], hasMore: data.hasMore || false };
   } catch (error) {
-    console.error("Error fetching posts:", error);
+    console.error("[API] Error fetching posts:", error);
     return { posts: [], hasMore: false };
   }
 };
 
+// --- Sub-components ---
+/**  FeedPost Component Optimized for readability and minimal nesting. */
+const FeedPost = React.memo(({
+  post,
+  activeIndex,
+  isCommentSectionVisible,
+  userId,
+  likedPosts,
+  handleCommentButtonClick,
+  nextImage,
+  prevImage,
+}: {
+  post: Post;
+  activeIndex: number;
+  isCommentSectionVisible: boolean;
+  userId: string;
+  likedPosts: Set<string>;
+  handleLike: (postId: string) => void;
+  handleCommentButtonClick: () => void;
+  nextImage: (postId: string, length: number) => void;
+  prevImage: (postId: string) => void;
+}) => {
+  const isLiked = likedPosts.has(post.id);
+
+  const fullName = useMemo(() =>
+    `${post.user.firstName ?? 'Anonymous'} ${post.user.lastName ?? ''}`.trim(),
+    [post.user.firstName, post.user.lastName]
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      // Removed layout prop to prevent unwanted 'zoom' effects during item transitions
+      className="group/card">
+      <Card
+        // onMouseEnter={() => console.log(`[UI] Hovering post: ${post.id}`)}
+        // className="mb-6 relative overflow-visible rounded-[2.5rem] bg-white/95 dark:bg-zinc-900/98 backdrop-blur-2xl shadow-2xl transition-all duration-300 hover:translate-y-0 hover:scale-100"
+        // // style={{ border: 'none', outline: 'none', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)' }}
+        className="mb-6 relative overflow-hidden rounded-3xl bg-card border border-border shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_4px_6px_-2px_rgba(0,0,0,0.05)] transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-0.5">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 p-4" style={{ borderBottom: 'none' }}>
+          <div className="flex items-center gap-3">
+            <Link href={`/profile/${post.user.id}`} className="group relative">
+              <div className="absolute -inset-1 bg-gradient-to-tr from-primary to-purple-600 rounded-full opacity-0 group-hover:opacity-40 blur transition-opacity duration-300" />
+              <Avatar className="h-11 w-11 border-2 border-white/20 dark:border-white/10 transition-transform group-hover:scale-105 relative z-10">
+                <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                  {post.user.email?.[0].toUpperCase() || "?"}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
+
+            <div className="flex flex-col">
+              <Link
+                href={`/profile/${post.user.id}`}
+                className="text-sm font-bold tracking-tight text-foreground transition-colors hover:text-primary"
+                onClick={() => console.log(`[Interaction] Profile clicked: ${post.user.id}`)} >
+                {fullName}
+              </Link>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground/80">
+                {post.time ?? new Date(post.createdAt).toLocaleDateString()}
+              </span>
+            </div>
+          </div>
+
+          <FollowButton userId={post.user.id} />
+        </CardHeader>
+
+        <CardContent className="px-5 py-2 text-sm leading-relaxed text-foreground/90" style={{ borderBottom: 'none' }}>
+          {post.content}
+        </CardContent>
+
+        {/* Carousel Section - Removed mt-2 and added overflow-hidden for seamless fit */}
+        {post.images && post.images.length > 0 && (
+          <div className="relative group w-full h-[340px] overflow-hidden bg-black/10">
+            <Image
+              src={post.images[activeIndex] || ""}
+              alt="Post Image"
+              fill
+              className="object-cover transition-opacity duration-300"
+              loading="eager"/>
+
+            {/* Ultra-Smooth Bottom Gradient Fade - Fixes Problem 2 & improves blend with footer */}
+            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none z-[5]" />
+
+            {/* Carousel Controls - Only visible if more than 1 image */}
+            {post.images.length > 1 && (
+              <>
+                <div className="absolute inset-0 flex items-center justify-between px-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="rounded-full h-8 w-8 bg-black/20 text-white backdrop-blur-sm border-white/10"
+                    onClick={() => {
+                      console.log(`[Carousel] Previous image clicked for postId: ${post.id}`);
+                      prevImage(post.id);
+                    }}
+                    disabled={activeIndex === 0}
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="rounded-full h-8 w-8 bg-black/20 text-white backdrop-blur-sm border-white/10"
+                    onClick={() => {
+                      console.log(`[Carousel] Next image clicked for postId: ${post.id}`);
+                      nextImage(post.id, post.images?.length ?? 0);
+                    }}
+                    disabled={activeIndex === post.images!.length - 1}
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </div>
+
+                {/* Visual Indicators Overlay */}
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 px-2 py-1 rounded-full bg-black/30 backdrop-blur-md">
+                  {post.images.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${idx === activeIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/40'
+                        }`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+        {/* Transparent Footer - Eliminates the corner artifact by removing redundant internal layer backgrounds */}
+        <CardFooter className="flex items-center justify-center gap-4 bg-transparent px-4 py-4 relative z-[6]" style={{ borderTop: 'none' }}>
+          <LikeButton
+            postId={post.id}
+            initialIsLiked={isLiked}
+            initialLikesCount={post.likesCount || 0}
+            userId={userId}
+          />
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              console.log(`[Interaction] Comments toggled for postId: ${post.id}`);
+              handleCommentButtonClick();
+            }}
+            className="flex items-center justify-center gap-2 rounded-xl text-muted-foreground transition-all hover:bg-primary/5 hover:text-primary active:scale-95"
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span className="text-xs font-medium">Comments</span>
+          </Button>
+
+          {/* <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => console.log(`[Interaction] Share clicked for postId: ${post.id}`)}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl text-muted-foreground transition-all hover:bg-primary/5 hover:text-primary active:scale-95"
+          >
+            <Share2 className="h-4 w-4" />
+            <span className="text-xs font-medium">Share</span>
+          </Button> */}
+        </CardFooter>
+
+        <AnimatePresence>
+          {isCommentSectionVisible && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden bg-black/5"
+            >
+              <CommentSection postId={post.id} userId={userId} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
+    </motion.div>
+  );
+});
+
+FeedPost.displayName = "FeedPost";
+// --- Main Component ---
+
 export default function FeedPage() {
+  // State
   const [page, setPage] = useState(1);
   const [allPosts, setAllPosts] = useState<Post[]>([]);
   const [hasMore, setHasMore] = useState(true);
@@ -451,90 +292,138 @@ export default function FeedPage() {
   const [delayedLoading, setDelayedLoading] = useState(true);
   const [openPost, setOpenPost] = useState(false);
   const [isCommentSectionVisible, setIsCommentSectionVisible] = useState(false);
-  const [query, setQuery] = useState("")
-  const [users, setUsers] = useState<any[]>([]);
+  const [query, setQuery] = useState("");
+  const [users, setUsers] = useState<SearchUser[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const debouncedQuery = useDebounce(query, 400);
+
+  // Queries
   const { data, isLoading, isError } = useQuery<FetchPostsResponse>({
     queryKey: ["posts", page],
     queryFn: () => fetchPosts(page),
     retry: 2,
     placeholderData: (prev) => prev,
+    staleTime: 1000 * 30, // 30 seconds
   });
 
-  const handleSearch = async () => {
-    const results = await searchUsers(query);
-    console.log(" Manual search:", query);
-    setSearchLoading(true);
-    setUsers(results);
-    setSearchLoading(false);
-  };
-  // const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
-  //   if (e.key === "Enter") handleSearch()
-  // }
-
+  // Effects
   useEffect(() => {
-    document.title = "Feed Page | My Next JS App";
+    document.title = "Feed | Zentia Universe";
+    // console.log("[Lifecycle] FeedPage mounted");
   }, []);
 
+  // Post Data Management
   useEffect(() => {
-    const fetchUsers = async () => {
-      if (!debouncedQuery) {
-        console.log(" Clearing search results");
-        setUsers([]);
-        return;
+    if (!data) return;
+
+    console.log(`[Data] Received ${data.posts.length} posts for page ${page}`);
+
+    setHasMore(data.hasMore);
+
+    setAllPosts((prev) => {
+      if (page === 1) return data.posts;
+
+      // Deduplicate by ID to prevent ghosting or duplicates
+      const existingIds = new Set(prev.map((p) => p.id));
+      const freshPosts = data.posts.filter((p) => !existingIds.has(p.id));
+
+      if (freshPosts.length === 0 && data.posts.length > 0) {
+        // console.warn("[Data] All received posts were duplicates.");
       }
 
-      console.log(" Debounced search:", debouncedQuery);
-      setSearchLoading(true);
-      const results = await searchUsers(debouncedQuery);
-      setUsers(results);
-      setSearchLoading(false);
-    };
-    fetchUsers();
-  }, [debouncedQuery]);
-
-  useEffect(() => {
-    if (!data?.posts) return;
-    setHasMore(data.hasMore);
-    setAllPosts((prev) => (page === 1 ? data.posts : [...prev, ...data.posts]));
+      return [...prev, ...freshPosts];
+    });
   }, [data, page]);
 
+  // Handle fake Loading delay for premium feel
   useEffect(() => {
     if (!isLoading && !isError) {
-      const timer = setTimeout(() => setDelayedLoading(false), 2000);
+      const timer = setTimeout(() => {
+        setDelayedLoading(false);
+        console.log("[UI] Skeleton loading cleared");
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [isLoading, isError]);
 
-  const nextImage = (postId: string, length: number) =>
-    setActiveIndices((prev) => ({ ...prev, [postId]: Math.min((prev[postId] ?? 0) + 1, length - 1) }));
+  // Search Logic
+  useEffect(() => {
+    let isActive = true;
 
-  const prevImage = (postId: string) =>
-    setActiveIndices((prev) => ({ ...prev, [postId]: Math.max((prev[postId] ?? 0) - 1, 0) }));
+    const fetchUsers = async () => {
+      if (!debouncedQuery) {
+        setUsers([]);
+        return;
+      }
 
-  const loadMorePosts = async () => {
-    if (!hasMore) return; // stop if no more posts
+      console.log(`[Search] Querying for: ${debouncedQuery}`);
+      setSearchLoading(true);
 
-    // Optional delay for smoother infinite scroll
-    await new Promise((res) => setTimeout(res, 2000));
+      try {
+        const results = await searchUsers(debouncedQuery);
+        if (isActive) setUsers(results as SearchUser[]);
+      } catch (err) {
+        console.error("[Search] Failed to fetch users:", err);
+      } finally {
+        if (isActive) setSearchLoading(false);
+      }
+    };
 
-    // Increment page
+    fetchUsers();
+    return () => { isActive = false; };
+  }, [debouncedQuery]);
+
+  // Interaction Handlers
+  const loadMorePosts = useCallback(async () => {
+    if (!hasMore || loadingMore) return;
+
+    setLoadingMore(true);
+    // console.log("[UI] Loading more posts triggered...");
+
+    // Smooth transition delay
+    await new Promise((res) => setTimeout(res, 800));
     setPage((prev) => prev + 1);
+    setLoadingMore(false);
+  }, [hasMore, loadingMore]);
+
+  const nextImage = useCallback((postId: string, length: number) => {
+    setActiveIndices((prev) => ({
+      ...prev,
+      [postId]: Math.min((prev[postId] ?? 0) + 1, length - 1)
+    }));
+  }, []);
+
+  const prevImage = useCallback((postId: string) => {
+    setActiveIndices((prev) => ({
+      ...prev,
+      [postId]: Math.max((prev[postId] ?? 0) - 1, 0)
+    }));
+  }, []);
+
+  const handleSearch = async () => {
+    console.log(`[Action] Manual search: ${query}`);
+    setSearchLoading(true);
+    try {
+      const results = await searchUsers(query);
+      setUsers(results);
+    } catch (err) {
+      console.error("[Search] Manual search failed:", err);
+    } finally {
+      setSearchLoading(false);
+    }
   };
 
   const handleLike = async (postId: string) => {
     try {
       const user = auth.currentUser;
       if (!user) {
-        console.warn(`[Like] User not logged in, cannot like post ${postId}`);
-        toast("You need to be logged in to like posts.");
+        toast("Login required to like posts");
         return;
       }
 
       const token = await user.getIdToken(true);
-
-      console.log(`[Like] Sending like/unlike request for post ${postId}...`);
+      console.log(`[Action] Toggling like for Post: ${postId}`);
 
       const response = await fetch("/api/posts/like", {
         method: "POST",
@@ -545,123 +434,168 @@ export default function FeedPage() {
         body: JSON.stringify({ postId }),
       });
 
-      if (!response.ok) {
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("text/html")) {
-          console.warn(`[Like] Not authorized to like post ${postId}`);
-          toast("Please log in to like posts");
-          return;
-        }
+      if (!response.ok) throw new Error("Failed to process like");
 
-        try {
-          const error = await response.json();
-          console.error(`[Like] Error liking post ${postId}:`, error.message);
-          toast(error.message || "Error liking post");
-        } catch {
-          console.error(`[Like] Unknown error liking post ${postId}`);
-          toast("Error liking post");
-        }
-        return;
-      }
-
-      const data = await response.json();
-      console.log(
-        `[Like] Post ${postId} ${data.liked ? "liked" : "unliked"} successfully. Total likes: ${data.likesCount}`
-      );
-
+      const resData = await response.json();
       setLikedPosts((prev) => {
-        const newSet = new Set(prev);
-        if (data.liked) {
-          newSet.add(postId);
-        } else {
-          newSet.delete(postId);
-        }
-        return newSet;
+        const next = new Set(prev);
+        resData.liked ? next.add(postId) : next.delete(postId);
+        return next;
       });
 
-      toast(data.message || (data.liked ? "Post liked" : "Post unliked"));
+      toast(resData.message || (resData.liked ? "Liked!" : "Unliked"));
     } catch (error) {
-      console.error(`[Like] Error processing like/unlike for post ${postId}:`, error);
-      toast("Something went wrong. Please try again.");
+      console.error("[Action] Like failed:", error);
+      toast("Action failed. Try again.");
     }
   };
 
-  const posts = allPosts;
+  // --- Render Helpers ---
 
-  const mainContent = isLoading || delayedLoading ? (
-    <SkeletonLoader />
-  ) : isError ? (
-    <p className="text-center py-10">Something went wrong.</p>
-  ) : posts.length === 0 ? (
-    <p className="text-center py-10">No posts yet.</p>
-  ) : (
-    <InfiniteScroll
-      dataLength={posts.length}
-      next={loadMorePosts}
-      hasMore={hasMore}
-      scrollThreshold={0.9}
-      loader={
-        <div className="flex justify-center my-4 ">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      }
-      endMessage={<p className="flex justify-center py-4">No more posts to show</p>} >
-      {posts.map((post, index) => {
-        const activeIndex = activeIndices[post.id] ?? 0;
+  const mainContent = useMemo(() => {
+    if (isLoading || delayedLoading) return <SkeletonLoader />;
+    if (isError) return <div className="text-center py-12 text-muted-foreground">Unable to load feed. Please try again.</div>;
+    if (allPosts.length === 0) return <div className="text-center py-12 text-muted-foreground">The universe is quiet. No posts yet.</div>;
 
-        return (
+    return (
+      <InfiniteScroll
+        dataLength={allPosts.length}
+        next={loadMorePosts}
+        hasMore={hasMore}
+        scrollThreshold={0.9}
+        loader={
+          <div className="flex justify-center p-6 bg-transparent">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        }
+        endMessage={
+          <div className="flex flex-col items-center py-8 text-muted-foreground select-none">
+            <Sparkles className="h-5 w-5 mb-2 opacity-50" />
+            <p className="text-xs uppercase tracking-widest">You've reached the end of the universe</p>
+          </div>
+        }
+      >
+        {allPosts.map((post, idx) => (
           <FeedPost
-            key={post.id + "-" + index}
+            key={`${post.id}-${idx}`}
             post={post}
-            activeIndex={activeIndex}
+            activeIndex={activeIndices[post.id] ?? 0}
             handleLike={handleLike}
-            handleCommentButtonClick={() => setIsCommentSectionVisible((prev) => !prev)}
+            handleCommentButtonClick={() => setIsCommentSectionVisible((p) => !p)}
             isCommentSectionVisible={isCommentSectionVisible}
             userId={post.user.id}
             likedPosts={likedPosts}
             nextImage={nextImage}
-            prevImage={prevImage} />
-        );
-      })}
-    </InfiniteScroll>
-  );
+            prevImage={prevImage}
+          />
+        ))}
+      </InfiniteScroll>
+    );
+  }, [allPosts, isLoading, delayedLoading, isError, hasMore, activeIndices, likedPosts, isCommentSectionVisible, loadMorePosts, nextImage, prevImage]);
+
   return (
     <SidebarProvider>
-      <div className="flex min-h-dvh w-full flex-col">
-        <header className="bg-card sticky top-0 z-55 border-b">
-          <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-2 sm:px-6">
-            <Link href="/feed" className="flex items-center gap-2">
-              <div className="w-[50px] h-[50px] rounded-full overflow-hidden">
-                <Image src="/logo.png" alt="Logo" width={50} height={50} className="object-cover w-full h-full scale-150" />
+      <div className="flex min-h-screen w-full flex-col bg-background selection:bg-primary/30">
+
+        {/* Header Navigation */}
+        <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-white dark:bg-card">
+          <div className="mx-auto flex max-w-7xl h-16 items-center justify-between gap-4 px-4 sm:px-6">
+
+            {/* Logo */}
+            <Link href="/feed" className="flex items-center gap-2 group shrink-0">
+              <div className="relative h-10 w-10 overflow-hidden rounded-xl bg-gradient-to-br from-primary to-purple-600 p-[2px] transition-transform group-hover:scale-105 active:scale-95 shadow-lg">
+                <div className="h-full w-full rounded-[9px] bg-background overflow-hidden relative">
+                  <Image src="/logo.png" alt="Z" fill className="object-cover scale-150" />
+                </div>
               </div>
-              <span className="lg:text-lg font-extrabold text-black italic tracking-wider animate-pulse dark:text-slate-600"> Zentia </span>
+              <span className="hidden sm:block text-xl font-bold tracking-tighter text-foreground bg-clip-text">
+                Zentia
+              </span>
             </Link>
-            <div className="relative w-full max-w-sm">
+
+            {/* Search Shell */}
+            <div className="relative flex-1 max-w-lg">
               <SearchBar
                 value={query}
                 onChange={setQuery}
                 onSearch={handleSearch}
-                placeholder="Search users..." />
-
+                placeholder="Search the universe..."
+              />
               {(query || searchLoading) && (
-                <SearchSuggestions users={users} loading={searchLoading} query={query} />
+                <SearchSuggestions
+                  users={users}
+                  loading={searchLoading}
+                  query={query}
+                  onClose={() => setQuery("")}
+                />
               )}
             </div>
 
-            <div className="flex items-center gap-1.5">
-              <NotificationBell />
-              <ThemeDropdown trigger={<Button variant="ghost" size="icon"><Moon className="size-8 " /></Button>} />
-              <Button size="sm" variant="secondary" onClick={() => setOpenPost(true)} className="transition-all duration-200 ease-in-out hover:scale-105 active:scale-95">
-                New Post
-              </Button>
-              <ProfileDropdown trigger={<Button variant="ghost" size="icon"><Avatar><AvatarFallback>U</AvatarFallback></Avatar></Button>} />
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 mr-2">
+                <NotificationBell />
+                <PremiumModeToggle />
+              </div>
+              <ProfileDropdown trigger={
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/5">
+                  <Avatar className="h-8 w-8 border border-white/10">
+                    <AvatarFallback>U</AvatarFallback>
+                  </Avatar>
+                </Button>
+              } />
             </div>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-xl flex-1 px-4 py-6 sm:px-6 ">{mainContent}</main>
-      </div>
 
-      <CreatePostModal open={openPost} onClose={() => setOpenPost(false)} />
+        {/* Main Layout Content */}
+        <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 relative bg-transparent">
+
+          {/* Enhanced Stats Dashboard */}
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            {[
+              { icon: Users, label: "2.5K", sub: "Explorers", color: "text-cyan-400" },
+              { icon: TrendingUp, label: "847", sub: "Trends", color: "text-purple-400" },
+              { icon: Zap, label: "12.3K", sub: "Sparks", color: "text-pink-400" }
+            ].map((stat, i) => (
+              <div
+                key={i}
+                className="bg-card border border-border rounded-lg p-4 text-center transition-all hover:scale-105 hover:shadow-xl"
+              >
+                <stat.icon
+                  className={`w-5 h-5 mx-auto mb-2 ${stat.color} transition-transform group-hover:scale-110`}
+                />
+                <div className="text-lg font-semibold text-gray-800 dark:text-gray-100">{stat.label}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">{stat.sub}</div>
+              </div>
+            ))}
+          </motion.div>
+
+          <div className="relative min-h-[500px]">
+            {mainContent}
+          </div>
+        </main>
+
+        {/* Floating Action Button */}
+        <div className="fixed bottom-8 right-8 z-50">
+          <Button
+            onClick={() => {
+              console.log("[Action] Modal: New Post opened");
+              setOpenPost(true);
+            }}
+            className="h-14 rounded-full px-6 shadow-[0_0_20px_rgba(var(--primary),0.3)] hover:shadow-primary/50 transition-all hover:-translate-y-1 active:translate-y-0 text-md font-semibold gap-2"
+          >
+            <Plus className="h-5 w-5" />
+            <span>New Post</span>
+          </Button>
+        </div>
+
+        <CreatePostModal open={openPost} onClose={() => setOpenPost(false)} />
+      </div>
     </SidebarProvider>
   );
 }

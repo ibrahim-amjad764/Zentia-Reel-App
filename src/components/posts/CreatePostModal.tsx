@@ -8,6 +8,8 @@ import { Button } from "../../../components/ui/button";
 import { toast } from "sonner";
 import Image from "next/image";
 import axios from "axios";
+import { Progress } from "../../../components/ui/progress";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Props {
   open: boolean;
@@ -195,12 +197,20 @@ export function CreatePostModal({ open, onClose, onSuccess }: Props) {
 
   return (
   <Dialog isOpen={open} onClose={onClose}> 
-    <DialogContent className="max-w-lg bg-gray-300 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 shadow-xl rounded-xl">
+    <DialogContent className="max-w-lg surface-glass shadow-neon rounded-3xl border border-white/12">
       <DialogHeader>
   <DialogTitle>
-    <h2 className="text-l text-center italic font-semibold text-zinc-900 dark:text-zinc-100">
-      Create Post
-    </h2>
+    <div className="flex items-center justify-between gap-3">
+      <div className="space-y-1">
+        <h2 className="text-base font-semibold tracking-tight text-foreground">
+          Create post
+        </h2>
+        <p className="text-xs text-muted-foreground/90">
+          Share updates with a polished, futuristic feel.
+        </p>
+      </div>
+      <div className="h-8 w-8 rounded-full bg-white/6 border border-white/10 shadow-[0_20px_60px_-50px_rgba(0,0,0,0.85)]" />
+    </div>
   </DialogTitle>
 </DialogHeader>
 
@@ -209,7 +219,7 @@ export function CreatePostModal({ open, onClose, onSuccess }: Props) {
         value={content}
         onChange={handleChange}
         rows={4}
-        className="bg-gray-200 dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-700 focus-visible:ring-2 focus-visible:ring-blue-500 text-zinc-300 dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 "/>
+        className="surface-glass border border-white/12 text-foreground placeholder:text-muted-foreground/70 ring-neon rounded-2xl resize-none"/>
 
       <input
         type="file"
@@ -230,12 +240,24 @@ export function CreatePostModal({ open, onClose, onSuccess }: Props) {
             &lt;
           </Button> */}
 
-          <div className="relative w-64 h-64 rounded-lg overflow-hidden border border-zinc-300 dark:border-zinc-700">
-            <Image
-              src={sanitizedImages[activeIndex]}
-              alt={`Post image ${activeIndex + 1}`}
-              fill
-              className="object-cover" />
+          <div className="relative w-full h-72 rounded-2xl overflow-hidden border border-white/12 shadow-[0_30px_90px_-55px_rgba(0,0,0,0.85)]">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={sanitizedImages[activeIndex]}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                className="absolute inset-0"
+              >
+                <Image
+                  src={sanitizedImages[activeIndex]}
+                  alt={`Post image ${activeIndex + 1}`}
+                  fill
+                  className="object-cover"
+                />
+              </motion.div>
+            </AnimatePresence>
           </div>
 
           {/* <Button
@@ -257,20 +279,20 @@ export function CreatePostModal({ open, onClose, onSuccess }: Props) {
             alt={`Post image ${i + 1}`}
             width={80}
             height={80}
-            className="rounded-md object-cover border border-zinc-300 dark:border-zinc-700 "/>
+            className="rounded-xl object-cover border border-white/12 hover:border-white/20 transition-[transform,border-color] duration-200 ease-out hover:scale-[1.02]"/>
         ))}
 
         {uploadingImages.map((img, i) => (
           <div
             key={i}
-            className="relative w-20 h-20 rounded-md overflow-hidden bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center" >
+            className="relative w-20 h-20 rounded-xl overflow-hidden bg-white/6 border border-white/10 flex items-center justify-center" >
             <img
               src={URL.createObjectURL(img.file)}
               alt="Uploading"
               className="w-full h-full object-cover blur-sm" />
-            <div
-              className="absolute bottom-0 left-0 h-1 bg-blue-500 transition-all"
-              style={{ width: `${img.progress}%` }}/>
+            <div className="absolute bottom-1 left-1 right-1">
+              <Progress value={img.progress} />
+            </div>
             <span className="absolute inset-0 flex items-center justify-center text-xs text-white font-bold">
               {img.progress}%
             </span>
@@ -281,16 +303,16 @@ export function CreatePostModal({ open, onClose, onSuccess }: Props) {
       {/* Buttons */}
       <div className="flex justify-between mt-6">
         <Button
-          variant="secondary"
+          variant="outline"
           onClick={() => fileRef.current?.click()}
-          className= " dark:bg-green-900 dark:hover:bg-slate-700 transition-all duration-200 ease-in-out hover:scale-105 active:scale-95">
+          className="rounded-full">
           Add Image
         </Button>
 
         <Button
           onClick={handleSubmit}
           disabled={loading}
-          className="bg-blue-600 hover:bg-blue-500 text-white transition-all duration-200 ease-in-out hover:scale-105 active:scale-95" >
+          className="rounded-full" >
           {loading ? "Posting..." : "Post"}
         </Button>
       </div>
