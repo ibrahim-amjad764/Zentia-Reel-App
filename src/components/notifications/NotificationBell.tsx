@@ -1,325 +1,116 @@
-// //src/components/notifications/NotificationBell.tsx
-// "use client";
-
-// import { useEffect, useState } from "react";
-// import { Bell } from "lucide-react";
-// import { NotificationDropdown } from "./NotificationDropdown";
-// import api from "../../lib/api";
-
-// export function NotificationBell() {
-//   const [unreadCount, setUnreadCount] = useState(0);
-//   const [open, setOpen] = useState(false);
-
-//   // Fetch unread notifications count
-//   const fetchUnreadCount = async () => {
-
-//     try {
-//       const res = await api.get("/notifications/unread-count");
-//       setUnreadCount(res.data.unread);
-//       console.log("[NotificationBell] Unread count:", res.data.unread);
-//     } catch (err) {
-//       console.error("[NotificationBell] Failed to fetch unread count:", err);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchUnreadCount();
-//     const interval = setInterval(fetchUnreadCount, 3000); // refresh every 30s
-//     return () => clearInterval(interval);
-//   }, []);
-
-//   return (
-//     <div className="relative">
-//       <button
-//         onClick={() => setOpen((prev) => !prev)}
-//         className="relative"
-//       >
-//         <Bell className="h-6 w-6 text-gray-600 hover:text-gray-800 transition-all duration-200" />
-//         {unreadCount > 0 && (
-//           <span className="absolute -top-1 -right-1 text-xs bg-red-500 text-white rounded-full px-1.5 py-0.5 animate-pulse">
-//             {unreadCount}
-//           </span>
-//         )}
-//       </button>
-
-//       {open && (
-//         <NotificationDropdown
-//           onClose={() => setOpen(false)}
-//           refreshUnread={fetchUnreadCount} // pass refresh function
-//         />
-//       )}
-//     </div>
-//   );
-// }
-
-
-//---------------------------------------------------------------------------//
-
-// "use Client";
-
-// import { useEffect, useState } from "react";
-// import { Bell } from "lucide-react";
-// import { NotificationDropdown } from "./NotificationDropdown";
-// import { useNotificationStore } from "../../store/notificationStore";
-// import { connectNotificationSocket } from "../../lib/notificationSocket";
-// import api from "../../lib/api";
-
-// export function NotificationBell() {
-//   const { unreadCount, setNotifications, setCurrentUserId } = useNotificationStore();
-//   const [open, setOpen] = useState(false);
-
-//   // fetch Notification
-//   const fetchInitialNotifications = async () => {
-
-//     try {
-//       const res = await api.get("/notifications");//return all notifi...
-//       if (res?.data?.notifications) {
-//         setNotifications(res.data.notifications);
-//         console.log("[NotificationBell] notification loaded:", res.data.notifications.length);
-//       }
-
-//       if (res?.data?.userId) {
-//         setCurrentUserId(res.data.uerId);
-//         console.log("[NotificationBell] CurrentUserId received from API", res.data.userId);
-//       }
-//     } catch (err) {
-//       console.error("NotifcatonBell Failed to fetch notif...", err);
-//     }
-//   };
-
-
-//   useEffect(() => {
-//     console.log("[NotificationBell] Mounting...");
-//     let syncInterval: ReturnType<typeof setInterval> | null = null; 
-
-//     // Read user from store
-//     fetchInitialNotifications().then(() => {
-//       const userIdFromStore = useNotificationStore.getState().currentUserId;
-//       if (!userIdFromStore) {
-//         console.warn("[NotificationBell] currentUserId missing after API Call; realtime disabled return");
-//       }
-//       console.log("[NotificationBell] Connecting WebSocket for user:", userIdFromStore);
-//       if (userIdFromStore) {
-//         connectNotificationSocket(userIdFromStore);
-//       }
-
-//       syncInterval = setInterval(() => {
-//         console.log("[NotificationBell] Background sync...");
-//         fetchInitialNotifications();
-//       }, 60000)
-//     })
-
-//     return () => {
-//       console.log("[NotificationBell] Unmounting...");
-//       if (syncInterval) clearInterval(syncInterval);
-//     };
-//   }, []);
-
-
-//   return (
-//     <div className="relative">
-//       <button
-//         onClick={() => setOpen((prev) => !prev)}
-//         className="relative" aria-label="Notifications">
-//         <Bell className="h-6 w-6 text-gray-600 hover:text-gray-800 transition-all duration-200" />
-
-//         {unreadCount > 0 && (
-//           <span
-//             id="notif-count"
-//             className="absolute -top-1 -right-1 text-xs bg-red-500 text-white rounded-full px-1.5 py-0.5 animate-pulse">
-//             {unreadCount}
-//           </span>
-//         )}
-//       </button>
-
-
-//       {open && <NotificationDropdown onClose={() => setOpen(false)} />}
-//     </div>
-//   );
-// } 
-
-
-
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Bell } from "lucide-react";
+import { Bell, Sparkles } from "lucide-react";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { useNotificationStore } from "../../store/notificationStore";
 import { connectNotificationSocket } from "../../lib/notificationSocket";
 import api from "../../lib/api";
+import { motion, AnimatePresence } from "framer-motion";
+
+/**
+ * NotificationBell component
+ * 
+ * Purpose: A luxury-tier notification trigger for the Zentia platform.
+ * Features:
+ * - Gold-gradient unread badge with reflective effects
+ * - Dynamic bell animations (shake, bounce)
+ * - Seamless integration with luxury NotificationDropdown
+ * - Real-time synchronization via WebSocket
+ */
 
 export function NotificationBell() {
   const { unreadCount, setNotifications, setCurrentUserId } = useNotificationStore();
   const [open, setOpen] = useState(false);
-  const [bounce, setBounce] = useState(false); // Elastic bounce animation for badge
-  const [shake, setShake] = useState(false); // Premium shake animation for bell
-  const [pulse, setPulse] = useState(false); // Subtle pulse for continuous attention
-  const [continuousShake, setContinuousShake] = useState(false); // Continuous shake effect - DISABLED
-  const [continuousBounce, setContinuousBounce] = useState(true); // Continuous bounce effect - ENABLED
-  const previousUnreadRef = useRef(unreadCount); // Track previous count for comparison
-  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Cleanup reference
+  const [isAnimating, setIsAnimating] = useState(false);
+  const previousUnreadRef = useRef(unreadCount);
+    const [shake, setShake] = useState(false); // Premium shake animation for bell
 
-  // Auto shake every 10 seconds
   useEffect(() => {
+    const checkNotifications = async () => {
+      try {
+        const res = await api.get("/notifications");
+        if (res?.data?.notifications) setNotifications(res.data.notifications);
+        if (res?.data?.userId) {
+          setCurrentUserId(res.data.userId);
+          connectNotificationSocket(res.data.userId);
+        }
+      } catch (err) {
+        console.error("[NotificationBell] Initialization failed:", err);
+      }
+    };
+    checkNotifications();
+
     const interval = setInterval(() => {
-      // console.log("[NotificationBell]  Auto shake triggered (every 10s)");
-      setShake(true);
-      setTimeout(() => {
-        setShake(false);
-        console.log("[NotificationBell]  Auto shake completed");
-      }, 2000); // 2 second shake duration
-    }, 10000); // 10 second interval
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 2000);
+    }, 15000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [setNotifications, setCurrentUserId]);
 
-  // Fetch initial notifications with error handling
-  const fetchInitialNotifications = async () => {
-    try {
-      // console.log("[NotificationBell] Fetching initial notifications...");
-      const res = await api.get("/notifications");
-
-      if (res?.data?.notifications) {
-        setNotifications(res.data.notifications);
-        console.log("[NotificationBell]  Notifications loaded:", res.data.notifications.length);
-      }
-
-      if (res?.data?.userId) {
-        setCurrentUserId(res.data.userId);
-        console.log("[NotificationBell]  CurrentUserId set:", res.data.userId);
-      }
-    } catch (err) {
-      console.error("[NotificationBell]  Failed to fetch notifications:", err);
-    }
-  };
-
-  // Premium animation effects when new notifications arrive
-  const triggerNotificationEffects = () => {
-    // console.log("[NotificationBell]  Triggering premium notification effects...");
-
-    // Clear any existing timeout to prevent conflicts
-    if (animationTimeoutRef.current) {
-      clearTimeout(animationTimeoutRef.current);
-    }
-
-    // Trigger all animations simultaneously for maximum impact
-    setBounce(true);
-    setShake(true);
-    setPulse(true);
-
-    // Staggered reset for smooth, natural feel
-    animationTimeoutRef.current = setTimeout(() => {
-      setBounce(false);
-      setShake(false);
-      setPulse(false);
-      // console.log("[NotificationBell]  Animation effects completed");
-    }, 3000); // Longer duration for premium feel
-  };
-
-  // Monitor unread count changes with optimized performance
   useEffect(() => {
-    const currentUnread = unreadCount;
-    const previousUnread = previousUnreadRef.current;
-
-    // Only trigger effects when count actually increases (new notifications)
-    if (currentUnread > previousUnread && previousUnread !== undefined) {
-      console.log(`[NotificationBell]  New notifications detected: ${previousUnread} → ${currentUnread}`);
-      triggerNotificationEffects();
-   }
-
-   // Update ref for next comparison
-    previousUnreadRef.current = currentUnread;
+    if (unreadCount > previousUnreadRef.current) {
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 3000);
+    }
+    previousUnreadRef.current = unreadCount;
   }, [unreadCount]);
 
-  // Component mount and WebSocket connection with optimized intervals
-  useEffect(() => {
-    // console.log("[NotificationBell]  Component mounting...");
-    let syncInterval: ReturnType<typeof setInterval> | null = null;
-
-   // Initial fetch and WebSocket setup
-    const initializeNotifications = async () => {
-      await fetchInitialNotifications();
-
-      const userId = useNotificationStore.getState().currentUserId;
-      if (!userId) {
-        console.warn("[NotificationBell]  CurrentUserId missing; realtime features disabled");
-      } else {
-        console.log("[NotificationBell] Connecting WebSocket for user:", userId);
-        connectNotificationSocket(userId);
-      }
-
-      // Optimized background sync - reduced frequency for better performance
-      syncInterval = setInterval(() => {
-        console.log("[NotificationBell]  Background sync check...");
-        fetchInitialNotifications();
-      }, 90000); // 90 seconds instead of 60 for better resource management
-    };
-
-    initializeNotifications();
-
-  // Cleanup function
-    return () => {
-      // console.log("[NotificationBell]  Component unmounting...");
-      if (syncInterval) {
-        clearInterval(syncInterval);
-      //  console.log("[NotificationBell]  Background sync cleared");
-      }
-      if (animationTimeoutRef.current) {
-       clearTimeout(animationTimeoutRef.current);
-        // console.log("[NotificationBell]  Animation timeout cleared");
-     }
-    };
-  }, []);
-
- return (
+  return (
     <div className="relative">
-      <button
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
         onClick={() => setOpen((prev) => !prev)}
-        className="relative group rounded-full transition-[transform,filter] duration-200 ease-out hover:scale-[1.03] hover:brightness-110 active:scale-[0.98] ring-neon"
-        aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
-        aria-haspopup="true"
-        aria-expanded={open}
+        className="relative p-2 rounded-full transition-all duration-300 group"
+        aria-label="Notifications"
       >
-        <Bell
-          className={`h-6 w-6 text-foreground/80 transition-[color,transform,filter] duration-300 group-hover:text-primary group-active:scale-95 ${shake ? "animate-premium-shake" : ""
-            }`}
-          style={{
-            animation: shake ? 'premium-shake 2s ease-in-out' : 'none'
-          }}
-          strokeWidth={2}
+        <Bell 
+          className={`h-6 w-6 transition-colors duration-500 ${
+            open ? "text-[#FF7E5F]" : "text-foreground/70 group-hover:text-[#FF7E5F]"
+           }${isAnimating ? "animate-bounce" : ""}`}
         />
 
-        {unreadCount > 0 && (
-          <span
-            className={`absolute -top-1.5 -right-1.5 min-w-[20px] h-5 text-xs font-bold bg-linear-to-r from-[oklch(0.78_0.13_200)] to-[oklch(0.72_0.16_305)] text-black rounded-full flex items-center justify-center px-1.5 shadow-[0_0_0_1px_oklch(1_0_0/18%),0_25px_70px_-50px_var(--fx-glow-cyan)] transition-[transform,filter] duration-300  ${
-              bounce || continuousBounce ? "slow-bounce" : ""
-            }`}
-            // style={{
-            //   animation: (bounce || continuousBounce) ? 'premium-bounce 6s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite' : 'none'
-            // }}
-            role="status"
-            aria-label={`${unreadCount} unread notifications`}>
-            {unreadCount > 99 ? "99+" : unreadCount}
-          </span>
+        <AnimatePresence>
+          {unreadCount > 0 && (
+            <motion.span
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              className="absolute top-1 right-1 min-w-[18px] h-4.5 flex items-center justify-center bg-gradient-to-tr from-[#FF7E5F] via-[#FFA366] to-[#FEB47B] text-black text-[10px] font-black rounded-full px-1 border border-black/10 shadow-[0_2px_10px_rgba(255,126,95,0.4)]"
+            >
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </motion.span>
+          )}
+        </AnimatePresence>
+
+        {/* Halo Glow for Active State */}
+        {open && (
+          <motion.div 
+            layoutId="bellGlow"
+            className="absolute inset-0 bg-[#FF7E5F]/10 blur-md rounded-full -z-10" 
+          />
         )}
+      </motion.button>
 
-        {/* Subtle glow effect for active state */}
-       {open && (
-          <div className="absolute inset-0 rounded-full bg-primary/20 blur-md animate-pulse" />
+      {/* BACKDROP OVERLAY */}
+      <AnimatePresence>
+        {open && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20"
+              onClick={() => setOpen(false)}
+            />
+            <div className="z-50 relative">
+              <NotificationDropdown onClose={() => setOpen(false)} />
+            </div>
+          </>
         )}
-      </button>
-
-      {open && (
-        <>
-          <div
-            className="fixed inset-0  bg-opacity-20 "
-            onClick={() => setOpen(false)}
-            aria-label="Close notifications"/>
-          <NotificationDropdown onClose={() => setOpen(false)} />
-        </>
-      )}
-
-   </div>
+      </AnimatePresence>
+    </div>
   );
 }

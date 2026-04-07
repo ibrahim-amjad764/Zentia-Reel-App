@@ -223,14 +223,16 @@ export async function POST(req: Request) {
     //   relation: ["user"], 
     // });
 
-    const newPost: Partial<Post> = {
+    const savedPost = await postRepo.save({
       content: content.trim(),
       images: images || [],
       user: currentUser,
-    };
-
-    const savedPost = await postRepo.save(newPost);
-    console.log("[POST /api/posts] Post created:", savedPost.id);
+      lat: currentUser.lat,
+      lng: currentUser.lng,
+      city: currentUser.city,
+      country: currentUser.country
+    });
+    console.log("[POST /api/posts] Post created with location anchoring:", savedPost.id);
 
     return NextResponse.json(savedPost, { status: 201 });
   } catch (error) {

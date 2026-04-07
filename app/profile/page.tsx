@@ -19,7 +19,9 @@ import { useRouter } from "next/navigation";
 import { Avatar } from "../../components/ui/avatar";
 import { Button } from "../../components/ui/button";
 import { toast } from "sonner";
-import { Moon } from "lucide-react";
+import { Moon, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import { Card } from "../../components/ui/card";
 import SearchSuggestions from "../../src/components/notifications/SearchSuggestions";
 import ProfileDropdown from "../../components/ui/dropdown-profile";
 import ProfileContent from "../../src/components/membership/profile-page/ProfileContent";
@@ -30,6 +32,7 @@ import Loader from "../../components/ui/Loader";
 import Image from "next/image";
 import Link from "next/link";
 import { PremiumModeToggle } from "../../components/ui/premium-mode-toggle";
+import PremiumNavbar from "../../components/layout/PremiumNavbar";
 
 interface User {
   id: string;
@@ -65,6 +68,8 @@ interface ProfileUser {
   company?: string;
   location?: string;
   createdAt?: string;
+  followersCount?: number;
+  followingCount?: number;
 }
 
 interface Comment {
@@ -156,6 +161,8 @@ const fetchCommentsForPosts = async (postIds: string[]) => {
   return await res.json();
 };
 
+import ProfileAboutPanel from "../../src/components/membership/profile-page/ProfileAboutPanel";
+
 // -----------------------------
 // Component
 // -----------------------------
@@ -167,50 +174,38 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
   const [openPost, setOpenPost] = useState(false);
-   const [query, setQuery] = useState("")
-  const [users, setUsers] = useState<
-    { id: string | number; username: string; email: string; firstName?: string; lastName?: string }[]
-  >([]);
+  const [query, setQuery] = useState("");
+  const [users, setUsers] = useState<{ id: string | number; username: string; email: string; firstName?: string; lastName?: string }[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const router = useRouter();
-const debouncedQuery = useDebounce(query, 400);
-  
-  // Determine where the user came from
-  const fromPage = searchParams.get("from") || "";
-  
-  useEffect(() => {
-  const fetchUsers = async () => {
-    if (!debouncedQuery) {
-      setUsers([]);
-      return;
-    }
-
-    setSearchLoading(true);
-    const results = await searchUsers(debouncedQuery);
-    setUsers(results);
-    setSearchLoading(false);
-  };
-
-  fetchUsers();
-}, [debouncedQuery]);
+  const debouncedQuery = useDebounce(query, 400);
 
   useEffect(() => {
-    document.title = "Profile | My Next JS App";
+    console.log("[ProfilePage] Component mounted. Initializing luxury experience.");
+    document.title = "Elite Profile | Zentia Universe";
   }, []);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (!debouncedQuery) {
+        setUsers([]);
+        return;
+      }
+      setSearchLoading(true);
+      const results = await searchUsers(debouncedQuery);
+      setUsers(results);
+      setSearchLoading(false);
+    };
+    fetchUsers();
+  }, [debouncedQuery]);
 
   useEffect(() => {
     const loadProfile = async () => {
       if (loading) return;
       setLoading(true);
+      console.log(`[ProfilePage] Loading profile and posts (page ${page})...`);
 
       try {
-        const token = await getFirebaseToken();
-        if (!token) {
-          toast.error("Please login again. Session expired.");
-          router.push("/auth/login");
-          return;
-        }
-
         const userProfile = await fetchUserProfile();
         const { posts: rawPosts, hasMore: more } = await fetchMyPosts(page);
 
@@ -219,193 +214,148 @@ const debouncedQuery = useDebounce(query, 400);
           email: userProfile.email || "unknown@example.com",
         });
 
-        // Get post IDs
         const postIds: string[] = rawPosts.map((p: Post) => p.id);
+        const [likesData, commentsData] = await Promise.all([
+          fetchLikesForPosts(postIds),
+          fetchCommentsForPosts(postIds)
+        ]);
 
-        // Fetch likes and comments
-        const likesData = await fetchLikesForPosts(postIds);
-        const commentsData = await fetchCommentsForPosts(postIds);
-
-        // Merge into posts
-        const postsWithEngagement: Post[] = mergeLikesCommentsIntoPosts(
-          rawPosts,
-          likesData,
-          commentsData
-        );
+        const postsWithEngagement: Post[] = mergeLikesCommentsIntoPosts(rawPosts, likesData, commentsData);
 
         setPosts(prev => (page === 1 ? postsWithEngagement : [...prev, ...postsWithEngagement]));
         setHasMore(more);
+        console.log("[ProfilePage] Data loaded successfully.");
       } catch (error) {
         console.error("[ProfilePage] Error fetching profile/posts:", error);
-        toast.error("Failed to load profile. Please try again.");
+        toast.error("Failed to load your elite profile.");
       } finally {
         setLoading(false);
       }
     };
-
     loadProfile();
   }, [page]);
 
-  const getFirebaseToken = async (): Promise<string | null> => {
-    try {
-      const auth = getAuth(app);
-      const currentUser = auth.currentUser;
-      if (!currentUser) return null;
-
-      return await getIdToken(currentUser, true);
-    } catch (error) {
-      console.error("Error getting Firebase token:", error);
-      return null;
-    }
-  };
-
   const handleSearch = async () => {
-    console.log(" Manual search:", query);
     setSearchLoading(true);
     const results = await searchUsers(query);
-
     setUsers(results);
     setSearchLoading(false);
   };
 
-  const handleEditProfile = () => router.push("/profile/edit");
+  const handleEditProfile = () => {
+    console.log("[ProfilePage] Redirecting to profile edit...");
+    router.push("/profile/edit");
+  };
 
   if (!user) {
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Loader 
-        title="Loading profile..." 
-        subtitle="Fetching your account details" 
-        size="lg" 
-      />
-    </div>
-  );
-}
-
-const loadMorePosts = async () => {
-  if (!loading && hasMore) {
-    setPage(prev => prev + 1);
-    setLoading(true);
-    // Your existing logic here
-    setLoading(false);
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-zinc-950">
+        <Loader 
+          title="Preparing Experience" 
+          subtitle="Building your universe..." 
+          size="lg" 
+        />
+      </div>
+    );
   }
-};
 
+  const loadMorePosts = async () => {
+    if (!loading && hasMore) {
+      setPage(prev => prev + 1);
+    }
+  };
 
   return (
-  <SidebarProvider>
-    <div className="flex min-h-dvh w-full flex-col bg-[#F8FAFC] dark:bg-zinc-950">
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full flex-col bg-zinc-50 dark:bg-[#050505] overflow-x-hidden">
+        
+        <PremiumNavbar 
+          query={query}
+          setQuery={setQuery}
+          handleSearch={handleSearch}
+          searchLoading={searchLoading}
+          users={users}
+        />
 
-      {/* HEADER */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 dark:bg-zinc-900/70 border-b border-gray-200 dark:border-zinc-800">
-        <div className="mx-auto flex max-w-8xl items-center justify-between gap-6 px-4 py-3 sm:px-6">
+        <main className="flex-1">
+          {/* HEADER SECTION (Full Width) */}
+          <section className="w-full">
+            <ProfileHeader
+              user={user}
+              onEdit={handleEditProfile}
+              showEditButton
+              postsCount={posts.length}
+              followersCount={user.followersCount || 0}
+              followingCount={user.followingCount || 0}
+            />
+          </section>
 
-          {/* Logo */}
-          <Link href="/feed" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 dark:border-zinc-700">
-              <Image
-                src="/logo.png"
-                alt="Logo"
-                width={40}
-                height={40}
-                className="object-cover w-full h-full"
-              />
+          {/* CONTENT GRID */}
+          <div className="max-w-7xl mx-auto px-4 md:px-12 py-16">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+              
+              {/* Left Column: Activity & Posts (8/12) */}
+              <div className="lg:col-span-8 space-y-8 border-full">
+                <ProfileCard
+                  posts={posts}
+                  hasMore={hasMore}
+                  loadMore={loadMorePosts}
+                  user={user} // Passed for mobile About view
+                />
+              </div>
+
+              {/* Right Column: About & Stats (4/12) - Desktop Only */}
+              <aside className="hidden lg:block lg:col-span-4 sticky top-36 h-fit space-y-8">
+                <ProfileAboutPanel user={user} />
+                
+                {/* Visual Completeness Card */}
+                <Card className="p-8 bg-gradient-to-br from-[#FF7E5F] to-[#FEB47B] rounded-3xl text-white shadow-2xl relative overflow-hidden group">
+                   <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:scale-125 transition-transform duration-500">
+                    <Sparkles className="w-12 h-12" />
+                  </div>
+                  <h4 className="text-lg font-black uppercase tracking-widest mb-2">Universe Status</h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between text-xs font-bold uppercase opacity-80">
+                      <span>Profile Strength</span>
+                      <span>85%</span>
+                    </div>
+                    <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden p-[1px]">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: "85%" }}
+                        transition={{ duration: 1.5, delay: 0.5 }}
+                        className="h-full bg-white rounded-full shadow-[0_0_15px_rgba(255,255,255,0.5)]"
+                      />
+                    </div>
+                    <p className="text-[10px] italic opacity-70 leading-relaxed font-medium">
+                      Your profile is shining bright. Complete your bio to reach Platinum status.
+                    </p>
+                  </div>
+                </Card>
+              </aside>
             </div>
-            <span className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
-              Zentia
-            </span>
-          </Link>
-
-          {/* Search */}
-          <div className="relative w-full max-w-md hidden sm:block">
-            <SearchBar
-              value={query}
-              onChange={setQuery}
-              onSearch={handleSearch}
-              placeholder="Search the universe..."
-            />
-
-            {(query || searchLoading) && (
-              <SearchSuggestions
-                users={users}
-                loading={searchLoading}
-                query={query}
-              />
-            )}
           </div>
+        </main>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <NotificationBell />
-            <PremiumModeToggle/>
-
-            <Button
-              size="sm"
-              onClick={() => setOpenPost(true)}
-              className="rounded-full px-4 bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 transition-all duration-200 active:scale-95"
-            >
-              New Post
-            </Button>
-          </div>
+        <CreatePostModal
+          open={openPost}
+          onClose={() => setOpenPost(false)}
+        />
+        
+        {/* MOBILE STICKY CREATE BUTTON (TikTok Style) */}
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 lg:hidden">
+          <Button 
+            onClick={() => setOpenPost(true)}
+            className="h-16 w-16 rounded-full bg-gradient-to-tr from-[#FF7E5F] to-[#FEB47B] text-white shadow-[0_10px_30px_rgba(255,126,95,0.4)] border-4 border-white/20 hover:scale-110 active:scale-95 transition-all"
+          >
+            <Sparkles size={28} />
+          </Button>
         </div>
 
-        {/* Mobile Search */}
-        <div className="px-4 pb-3 sm:hidden">
-          <SearchBar
-            value={query}
-            onChange={setQuery}
-            onSearch={handleSearch}
-            placeholder="Search users..."
-          />
-
-          {(query || searchLoading) && (
-            <SearchSuggestions
-              users={users}
-              loading={searchLoading}
-              query={query}
-            />
-          )}
-        </div>
-      </header>
-
-      {/* MAIN */}
-<main className="flex-1 mt-4">
-  <div className="min-h-screen bg-slate-100 text-gray-900 dark:bg-zinc-950">
-    
-    {/* FULL WIDTH CONTAINER */}
-    <div className="w-full px-10 py-10 space-y-6">
-
-      {/* Profile Section (BIG HEADER STYLE) */}
-      <div className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border border-white/20 dark:border-zinc-800 rounded-3xl shadow-xl p-8">
-        <ProfileHeader
-          user={user}
-          onEdit={handleEditProfile}
-          showEditButton
-        />
       </div>
-
-      {/* Posts Section */}
-      <div className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border border-white/20 dark:border-zinc-800 rounded-3xl shadow-xl p-8">
-        <ProfileCard
-          posts={posts}
-          hasMore={hasMore}
-          loadMore={loadMorePosts}
-        />
-      </div>
-
-    </div>
-  </div>
-</main>
-
-      {/* Modal */}
-      <CreatePostModal
-        open={openPost}
-        onClose={() => setOpenPost(false)}
-      />
-    </div>
-  </SidebarProvider>
-);
-
+    </SidebarProvider>
+  );
 };
+
 
 export default ProfilePage;

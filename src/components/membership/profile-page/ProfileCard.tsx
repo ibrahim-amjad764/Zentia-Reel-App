@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { Loader2, Grid, Layout, Image as ImageIcon, Info, Heart, MessageCircle, Share2, MoreHorizontal } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "../../../../components/ui/card";
+import { Button } from "../../../../components/ui/button";
+import ProfileAboutPanel from "./ProfileAboutPanel";
 
 // Types
 interface Comment {
@@ -31,295 +33,210 @@ interface ProfileCardProps {
   hasMore: boolean;
   posts?: Post[];
   loadMore: () => Promise<void>;
+  user?: any; // Added for About tab on mobile
 }
 
-const ProfileCard = ({ posts = [], hasMore, loadMore }: ProfileCardProps) => {
-  
-  const [expandedPosts, setExpandedPosts] = useState<Record<string, boolean>>({});
-  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+const ProfileCard = ({ posts = [], hasMore, loadMore, user }: ProfileCardProps) => {
+  const [activeTab, setActiveTab] = useState<"posts" | "media" | "about">("posts");
   const [loading, setLoading] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Expand / Collapse
-  const toggleExpand = (id: string) => {
-    setExpandedPosts((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  const tabs = [
+    { id: "posts", label: "Posts", icon: <Layout size={18} /> },
+    { id: "media", label: "Media", icon: <ImageIcon size={18} /> },
+    { id: "about", label: "Details", icon: <Info size={18} />, mobileOnly: true },
+  ];
 
-  // Comment Input
-  const handleCommentChange = (id: string, value: string) => {
-    setCommentInputs((prev) => ({ ...prev, [id]: value }));
-  };
-
-  // Load more with delay
   const loadMoreWithTimeout = async () => {
     setLoading(true);
-    const minDelay = 1200;
+    const minDelay = 800;
     const start = Date.now();
-
     await loadMore();
-
     const elapsed = Date.now() - start;
-    if (elapsed < minDelay) {
-      await new Promise((res) => setTimeout(res, minDelay - elapsed));
-    }
-
+    if (elapsed < minDelay) await new Promise((res) => setTimeout(res, minDelay - elapsed));
     setLoading(false);
   };
 
+  const mediaPosts = posts.filter(p => p.images && p.images.length > 0);
+
   return (
-    <div className="w-full px-3 sm:px-4 md:px-6">
-      <div className="w-full max-w-2xl mx-auto space-y-7">
-
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">
-            My Posts
-          </h3>
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            {posts.length} total
-          </span>
-        </div>
-
-        {/* Skeleton Loader */}
-        {loading && posts.length === 0 && (
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="p-5 rounded-2xl bg-white dark:bg-zinc-900 animate-pulse">
-                <div className="h-4 w-3/4 bg-gray-200 dark:bg-zinc-700 rounded mb-3" />
-                <div className="h-4 w-1/2 bg-gray-200 dark:bg-zinc-700 rounded" />
-              </div>
+    <div className="w-full">
+      {/* TABS NAVIGATION */}
+      {/* <div className="sticky top-[80px] md:top-[96px] z-30 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-y border-zinc-200 dark:border-zinc-800 mb-8"> */}
+      <div className="sticky top-[80px] md:top-[96px] z-30 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-y text-card-foreground-border dark:border-zinc-800 rounded-2xl mb-8">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-center md:justify-start gap-8 overflow-x-auto no-scrollbar py-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`relative flex items-center gap-2 py-4 px-2 transition-all duration-300 group ${
+                  tab.mobileOnly ? "md:hidden" : ""
+                } ${
+                  activeTab === tab.id
+                    ? "text-[#FF7E5F]"
+                    : "text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300"
+                }`}
+              >
+                <span className={`transition-transform duration-300 ${activeTab === tab.id ? "scale-110" : "group-hover:scale-110"}`}>
+                  {tab.icon}
+                </span>
+                <span className="text-sm font-bold uppercase tracking-widest">{tab.label}</span>
+                {activeTab === tab.id && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#FF7E5F] to-[#FEB47B] rounded-full"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+              </button>
             ))}
           </div>
-        )}
+        </div>
+      </div>
 
-        {/* Empty */}
-        {!loading && posts.length === 0 && (
-          <div className="text-center py-16 border border-dashed border-gray-300 dark:border-zinc-700 rounded-2xl">
-            <p className="text-gray-400 text-sm">No posts yet</p>
-            <p className="text-xs text-gray-300 mt-1">Start sharing something </p>
-          </div>
-        )}
+      {/* CONTENT AREA */}
+      <div className="max-w-7xl mx-auto px-4 pb-20">
+        <AnimatePresence mode="wait">
+          {activeTab === "posts" && (
+            <motion.div
+              key="posts"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+            >
+              <InfiniteScroll
+                dataLength={posts.length}
+                next={loadMoreWithTimeout}
+                hasMore={hasMore}
+                loader={<InfiniteSkeletonGrid />}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                {posts.map((post, idx) => (
+                  <PostCard key={post.id} post={post} index={idx} />
+                ))}
+              </InfiniteScroll>
+              {posts.length === 0 && !loading && <EmptyState message="No posts yet. Start the journey." />}
+            </motion.div>
+          )}
 
-        {/* Posts */}
-        {posts.length > 0 && (
-          <InfiniteScroll
-            dataLength={posts.length}
-            next={loadMoreWithTimeout}
-            hasMore={hasMore}
-            scrollThreshold={0.9}
-            loader={
-              <div className="flex justify-center my-6">
-                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-              </div>
-            }
-          >
-            <div className="space-y-6">
-              {posts.map((post) => {
-                const isExpanded = expandedPosts[post.id];
-                const isLong = post.content.length > 120;
+          {activeTab === "media" && (
+            <motion.div
+              key="media"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.4 }}
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4"
+            >
+              {mediaPosts.map((post, idx) => (
+                <MediaGridItem key={post.id} post={post} index={idx} />
+              ))}
+              {mediaPosts.length === 0 && <EmptyState message="No media uploaded yet." />}
+            </motion.div>
+          )}
 
-                return (
-                  <Card
-                    key={post.id}
-                    className="group p-5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300"
-                  >
-                    {/* Content */}
-                    <p className="text-[15px] text-gray-800 dark:text-gray-300 leading-relaxed">
-                      {isLong && !isExpanded
-                        ? post.content.slice(0, 120) + "..."
-                        : post.content}
-                    </p>
-
-                    {isLong && (
-                      <button
-                        onClick={() => toggleExpand(post.id)}
-                        className="text-xs mt-1 text-gray-500 hover:underline"
-                      >
-                        {isExpanded ? "Show less" : "Read more"}
-                      </button>
-                    )}
-
-                    {/* Image */}
-                    {post.images?.length ? (
-                      <div className="mt-4 overflow-hidden rounded-xl">
-                        <img
-                          src={post.images[0]}
-                          alt="Post"
-                          className="w-full max-h-80 object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                        />
-                      </div>
-                    ) : null}
-
-                    {/* Meta */}
-                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 dark:border-zinc-800">
-                      <span className="text-xs text-gray-400">
-                        {new Date(post.createdAt).toLocaleString()}
-                      </span>
-
-                      <div className="flex items-center gap-4">
-
-                        {/* Like Button */}
-                        <motion.button
-                          whileTap={{ scale: 0.75 }}
-                          className="flex items-center gap-1 text-gray-600 dark:text-gray-300"
-                        >
-                          <motion.span
-                            whileTap={{ scale: 1.4 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            ❤️
-                          </motion.span>
-                          {post.likesCount || 0}
-                        </motion.button>
-
-                        {/* Comments Count */}
-                        <span className="text-gray-500 text-sm">
-                          💬 {post.comments?.length || 0}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Comment Input */}
-                    <div className="mt-4 flex items-center gap-2">
-                      <input
-                        type="text"
-                        placeholder="Write a comment..."
-                        value={commentInputs[post.id] || ""}
-                        onChange={(e) =>
-                          handleCommentChange(post.id, e.target.value)
-                        }
-                        className="flex-1 text-sm px-3 py-2 rounded-full bg-gray-100 dark:bg-zinc-800 outline-none"
-                      />
-                      <button className="text-sm text-blue-500 hover:underline">
-                        Post
-                      </button>
-                    </div>
-
-                    {/* Comments */}
-                    <div className="mt-4 space-y-3">
-                      {post.comments?.map((comment) => (
-                        <div key={comment.id} className="flex gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-zinc-700 flex items-center justify-center text-xs">
-                            {comment.user.firstName?.[0]}
-                          </div>
-
-                          <div className="flex-1 bg-gray-50 dark:bg-zinc-800 rounded-2xl px-4 py-2">
-                            <p className="text-sm text-gray-800 dark:text-gray-300">
-                              <span className="font-semibold">
-                                {comment.user.firstName}
-                              </span>{" "}
-                              {comment.content}
-                            </p>
-                            <p className="text-[11px] text-gray-400 mt-1">
-                              {new Date(comment.createdAt).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                  </Card>
-                );
-              })}
-            </div>
-          </InfiniteScroll>
-        )}
+          {activeTab === "about" && (
+            <motion.div
+              key="about"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="md:hidden"
+            >
+              <ProfileAboutPanel user={user} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
 };
 
+const PostCard = ({ post, index }: { post: Post; index: number }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+      whileHover={{ y: -5 }}
+      className="group p-2"
+    >
+      {/* <Card className="overflow-hidden bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl border-white/20 dark:border-zinc-800 rounded-[2.5rem] shadow-sm hover:shadow-2xl transition-all duration-500 h-full flex flex-col"> */}
+      <Card className="overflow-hidden bg-text-card-foreground dark:bg-zinc-900/40 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-xs hover:shadow-xs transition-all duration-300 h-full flex flex-col">
+        {post.images && post.images.length > 0 && (
+          <div className="relative aspect-square overflow-hidden">
+            <img 
+              src={post.images[0]} 
+              alt="Post" 
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </div>
+        )}
+        <div className="p-6 flex-1 flex flex-col justify-between">
+          <div>
+             <p className="text-sm md:text-base text-gray-800 dark:text-zinc-200 line-clamp-3 leading-relaxed mb-4">
+              {post.content}
+            </p>
+          </div>
+         
+          <div className="flex items-center justify-between pt-4 border-t border-zinc-100 dark:border-zinc-800">
+            <div className="flex gap-4">
+              <button className="flex items-center gap-1.5 text-xs font-bold text-gray-500 dark:text-zinc-400 hover:text-red-500 transition-colors">
+                <Heart size={16} /> {post.likesCount || 0}
+              </button>
+              <button className="flex items-center gap-1.5 text-xs font-bold text-gray-500 dark:text-zinc-400 hover:text-[#FF7E5F] transition-colors">
+                <MessageCircle size={16} /> {post.comments?.length || 0}
+              </button>
+            </div>
+            <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400 dark:text-zinc-600">
+              {new Date(post.createdAt).toLocaleDateString()}
+            </span>
+          </div>
+        </div>
+      </Card>
+    </motion.div>
+  );
+};
+
+const MediaGridItem = ({ post, index }: { post: Post; index: number }) => (
+  <motion.div
+    initial={{ opacity: 0, scale: 0.8 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ delay: index * 0.03 }}
+    whileHover={{ scale: 0.98 }}
+    className="relative aspect-square rounded-2xl overflow-hidden cursor-pointer group shadow-lg"
+  >
+    <img 
+      src={post.images![0]} 
+      alt="Media" 
+      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-125" 
+    />
+    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-4 transition-all duration-300">
+      <div className="flex items-center gap-1 text-white"><Heart size={18} fill="white" /> {post.likesCount || 0}</div>
+      <div className="flex items-center gap-1 text-white"><MessageCircle size={18} fill="white" /> {post.comments?.length || 0}</div>
+    </div>
+  </motion.div>
+);
+
+const InfiniteSkeletonGrid = () => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+    {[1, 2, 3].map(i => (
+      <div key={i} className="h-64 rounded-[2.5rem] bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+    ))}
+  </div>
+);
+
+const EmptyState = ({ message }: { message: string }) => (
+  <div className="flex flex-col items-center justify-center py-20 text-center">
+    <div className="p-6 rounded-full bg-zinc-100 dark:bg-zinc-900 mb-4">
+      <Grid className="w-12 h-12 text-zinc-300 dark:text-zinc-700" />
+    </div>
+    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{message}</h3>
+    <p className="text-sm text-gray-500 dark:text-zinc-500">Share your universe with the world.</p>
+  </div>
+);
+
 export default ProfileCard;
-    // return (
-    //   <div className="w-full px-3 sm:px-4 md:px-6">
-    //     <div className="w-full max-w-2xl mx-auto space-y-6">
-    //       <h3 className="text-xl sm:text-2xl font-semibold text-slate-800 dark:text-gray-300">
-    //         My Posts ({posts.length})
-    //       </h3>
-  
-    //       {posts.length === 0 && (
-    //         <p className="text-center text-gray-400 text-m italic">No posts yet.</p>
-    //       )}
-  
-    //       {posts.length > 0 && (
-    //         <InfiniteScroll
-    //           dataLength={posts.length}
-    //           next={loadMoreWithTimeout} // use the wrapper
-    //           hasMore={hasMore}
-    //           scrollThreshold={0.9}
-    //           loader={
-    //             <div className="flex justify-center my-4">
-    //               <Loader2 className="h-6 w-6 animate-spin" />
-    //             </div>
-    //           }
-    //           endMessage={
-    //             <p className="text-center text-gray-600 text-sm mt-4 italic">
-    //               No more posts exist for this user.
-    //             </p>
-    //           }  >
-    //           <div className="space-y-4">
-    //             {posts.map((post) => (
-    //               <Card
-    //                 key={post.id}
-    //                 className="p-4 bg-white border border-gray-200 shadow-sm w-full overflow-hidden dark:bg-zinc-800" >
-    //                 {/* Post content */}
-    //                 <p className="text-sm sm:text-base text-gray-700 warp-break-words dark:text-gray-400">
-    //                   {post.content}
-    //                 </p>
-  
-    //                 {/* Optional post image */}
-    //                 {post.images?.length ? (
-    //                   <div className="mt-3 w-full">
-    //                     <img
-    //                       src={post.images[0]}
-    //                       alt="Post image"
-    //                       className="w-full max-h-72 object-cover rounded-md"/>
-    //                   </div>
-    //                 ) : null}
-  
-    //                 {/* Post date */}
-    //                 <p className="text-xs text-gray-500 ml-130">
-    //                   {new Date(post.createdAt).toLocaleString()}
-    //                 </p>
-  
-    //                 {/* Likes */}
-    //                 <p className="font-semibold text-sm ">
-    //                   Likes: {post.likesCount || 0}
-    //                 </p>
-  
-    //                 {/* Comments */}
-    //                 <div className="text-sm mt-2">
-    //                   <p className="font-semibold mb-1">
-    //                     Comments ({post.comments?.length || 0}):
-    //                   </p>
-  
-    //                   {(!post.comments || post.comments.length === 0) && (
-    //                     <p className="text-gray-400">No comments yet.</p>
-    //                   )}
-  
-    //                   <ul className="space-y-2">
-    //                     {post.comments?.map((comment) => (
-    //                       <li key={comment.id} className="border-t pt-1">
-    //                         <p>
-    //                           <strong>
-    //                             {comment.user.firstName}{" "}
-    //                             {comment.user.lastName || ""}:
-    //                           </strong>{" "}
-    //                           {comment.content}
-    //                         </p>
-    //                         <p className="text-xs text-gray-400">
-    //                           {new Date(comment.createdAt).toLocaleString()}
-    //                         </p>
-    //                       </li>
-    //                     ))}
-    //                   </ul>
-    //                 </div>
-    //               </Card>
-    //             ))}
-    //           </div>
-    //         </InfiniteScroll>
-    //       )}
-    //     </div>
-    //   </div>
-    // );
-  
-    

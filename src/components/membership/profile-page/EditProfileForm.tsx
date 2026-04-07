@@ -1,105 +1,43 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Textarea } from "../../../../components/ui/textarea";
 import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
 import { toast } from "sonner";
 import { Card } from "../../../../components/ui/card";
+import { motion, AnimatePresence } from "framer-motion";
+import { Upload, Link as LinkIcon, AtSign, Globe, MapPin, Briefcase, Camera, Check, ChevronRight, Twitter, Linkedin } from "lucide-react";
 
 interface EditProfileFormProps {
-  user: {
-    id?: string;
-    firstName?: string;
-    lastName?: string;
-    email: string;
-    avatarUrl?: string;
-    bio?: string;
-    jobTitle?: string;
-    company?: string;
-    phone?: string;
-    location?: string;
-    website?: string;
-    github?: string;
-    linkedin?: string;
-    twitter?: string;
-    skills?: string[];
-    hobbies?: string[];
-  };
-  onSave: (user: unknown) => Promise<void>
+  user: any;
+  onSave: (user: unknown) => Promise<void>;
   onCancel: () => void;
   isSaving: boolean;
+  onUpdate: (updated: any) => void;
 }
 
-function isValidEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-}
-
-function isValidUrlMaybe(value: string) {
-  if (!value.trim()) return true;
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
-const EditProfileForm = ({ user, onSave, onCancel, isSaving }: EditProfileFormProps) => {
-  const [updatedUser, setUpdatedUser] = useState<Record<string, unknown> & {
-    email?: string;
-    firstName?: string;
-    lastName?: string;
-    avatarUrl?: string;
-    bio?: string;
-    jobTitle?: string;
-    company?: string;
-    phone?: string;
-    location?: string;
-    website?: string;
-    github?: string;
-    linkedin?: string;
-    twitter?: string;
-    skillsText?: string;
-    hobbiesText?: string;
-    id?: string;
-  }>({
+const EditProfileForm = ({ user, onSave, onCancel, isSaving, onUpdate }: EditProfileFormProps) => {
+  const [updatedUser, setUpdatedUser] = useState<any>({
     ...user,
-    skillsText: ((user.skills ?? []) as string[]).join(", "),
-    hobbiesText: ((user.hobbies ?? []) as string[]).join(", "),
+    skillsText: (user.skills || []).join(", "),
+    hobbiesText: (user.hobbies || []).join(", "),
   });
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [touched, setTouched] = useState<Record<string, boolean>>({}); // track touch event
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  const errors = useMemo(() => {
-    const e: Record<string, string> = {};
-
-    if (!updatedUser.email?.trim()) e.email = "Email is required.";
-    else if (!isValidEmail(updatedUser.email)) e.email = "Please enter a valid email.";
-    if (updatedUser.website && !isValidUrlMaybe(updatedUser.website))
-      e.website = "Website must be a valid URL starting with http(s)://";
-    if (updatedUser.github && !isValidUrlMaybe(updatedUser.github))
-      e.github = "GitHub must be a valid URL starting with http(s)://";
-    if (updatedUser.linkedin && !isValidUrlMaybe(updatedUser.linkedin))
-      e.linkedin = "LinkedIn must be a valid URL starting with http(s)://";
-    if (updatedUser.twitter && !isValidUrlMaybe(updatedUser.twitter))
-      e.twitter = "Twitter must be a valid URL starting with http(s)://";
-
-    return e;
+  // Sync with preview on every state change
+  useEffect(() => {
+    onUpdate(updatedUser);
   }, [updatedUser]);
-
-  const isValid = Object.keys(errors).length === 0;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setUpdatedUser({ ...updatedUser, [name]: value });
-  };
-
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setTouched((t) => ({ ...t, [e.target.name]: true }));
+    console.log(`[EditProfileForm] Field update: ${name} = "${value}"`);
+    setUpdatedUser((prev: any) => ({ ...prev, [name]: value }));
   };
 
   const handleAvatarUpload = async (file: File) => {
     setUploadingAvatar(true);
-    const loadingToast = toast.loading("Uploading avatar...");
+    const loadingToast = toast.loading("Uploading primary identity...");
     try {
       const form = new FormData();
       form.append("file", file);
@@ -110,8 +48,8 @@ const EditProfileForm = ({ user, onSave, onCancel, isSaving }: EditProfileFormPr
       const url = data?.urls?.[0];
       if (!url) throw new Error("Invalid upload response");
 
-      setUpdatedUser((u) => ({ ...u, avatarUrl: url }));
-      toast.success("Avatar uploaded successfully!");
+      setUpdatedUser((u: any) => ({ ...u, avatarUrl: url }));
+      toast.success("Avatar updated successfully!");
     } catch (err: any) {
       toast.error(err.message || "Avatar upload failed");
     } finally {
@@ -119,284 +57,353 @@ const EditProfileForm = ({ user, onSave, onCancel, isSaving }: EditProfileFormPr
       toast.dismiss(loadingToast);
     }
   };
-  //make clean array format
-  const buildPayload = () => {
-    const toTags = (text: string) =>
-      text
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
 
-    return {
-      id: String(updatedUser.id ?? ""),
-      firstName: String(updatedUser.firstName ?? ""),
-      lastName: String(updatedUser.lastName ?? ""),
-      email: String(updatedUser.email ?? ""),
-      avatarUrl: String(updatedUser.avatarUrl ?? ""),
-      bio: String(updatedUser.bio ?? ""),
-      jobTitle: String(updatedUser.jobTitle ?? ""),
-      company: String(updatedUser.company ?? ""),
-      phone: String(updatedUser.phone ?? ""),
-      location: String(updatedUser.location ?? ""),
-      website: String(updatedUser.website ?? ""),
-      github: String(updatedUser.github ?? ""),
-      linkedin: String(updatedUser.linkedin ?? ""),
-      twitter: String(updatedUser.twitter ?? ""),
-      skills: toTags(String(updatedUser.skillsText ?? "")),
-      hobbies: toTags(String(updatedUser.hobbiesText ?? "")),
-    };
-  };
+  const toTags = (text: string) => text.split(",").map(s => s.trim()).filter(Boolean);
 
   const handleSave = async () => {
-    if (!isValid) {
-      toast.error("Please fix the errors in the form!");
+    if (!updatedUser.firstName || !updatedUser.email) {
+      toast.error("Essential fields are missing.");
       return;
     }
-    try {
-      await onSave(buildPayload());
-      // Toast handled by parent (edit page)
-    } catch (err) {
-      toast.error("Failed to save profile");
-    }
+
+    const payload = {
+      ...updatedUser,
+      id: user.id,
+      skills: toTags(updatedUser.skillsText || ""),
+      hobbies: toTags(updatedUser.hobbiesText || ""),
+    };
+
+    console.log("[EditProfileForm] Final payload prepared:", payload.email);
+    await onSave(payload);
+  };
+
+  const inputClasses = "bg-white dark:bg-zinc-900 border-none ring-1 ring-zinc-200 dark:ring-zinc-800 focus:ring-2 focus:ring-[#FF7E5F] transition-all duration-300 rounded-2xl h-12 px-5 text-sm font-medium";
+  const labelClasses = "text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 block ml-1";
+
+  // Framer Motion Variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
   };
 
   return (
-    <Card className="p-6 bg-white backdrop-blur-lg shadow-lg rounded-lg border-4 border-gray-100 dark:bg-zinc-900/80 dark:border-zinc-700/50">
-      <div className="flex flex-col gap-5">
-        {/* Avatar */}
-        <div className="flex flex-col gap-2">
-          <label className="block text-sm font-semibold text-black dark:text-white">Profile picture</label>
-          <div className="flex items-center gap-3 border-2 rounded-md dark:border-gray-600 hover:border-blue-500 transition-colors duration-200">
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) void handleAvatarUpload(file);
-              }}
-              disabled={isSaving || uploadingAvatar}
-              className="border-zinc-900/30" />
-            {updatedUser.avatarUrl && (
-              <a href={updatedUser.avatarUrl} target="_blank" rel="noreferrer"
-                className="text-sm underline underline-offset-2 text-black">
-                Preview
-              </a>
-            )}
-          </div>
-          {uploadingAvatar && <p className="text-xs text-gray-200">Uploading...</p>}
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-12 pb-20"
+    >
+      {/* SECTION: IDENTITY */}
+      <motion.section variants={itemVariants} className="space-y-6">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="h-1 w-8 bg-[#FF7E5F] rounded-full" />
+          <h3 className="text-xl font-black tracking-tight">Identity</h3>
         </div>
 
-        {/* Name */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-black dark:text-white ">First Name *</label>
-            <Input
-              type="text"
-              name="firstName"
-              value={updatedUser.firstName ?? ""}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="First name"
-              className=" text-l border-zinc-900/30 placeholder:text-slate-700 placeholder:opacity-60 dark:text-gray-400  rounded-md dark:border-gray-600" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Avatar Upload */}
+          <div className="md:col-span-2 flex items-center gap-8 p-6 bg-white dark:bg-zinc-900/50 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800 shadow-sm transition-all hover:shadow-md">
+            <div className="relative group">
+              <div className="absolute inset-0 rounded-full bg-[#FF7E5F] opacity-10 scale-110 blur-xl hover:opacity-20 transition-opacity" />
+              <div className="h-24 w-24 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden flex items-center justify-center border-4 border-white dark:border-zinc-900 relative">
+                {updatedUser.avatarUrl ? (
+                  <img src={updatedUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <Camera className="text-gray-400" />
+                )}
+                {uploadingAvatar && <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin rounded-full" /></div>}
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <h4 className="text-sm font-bold">Profile Picture</h4>
+              <p className="text-xs text-gray-500 max-w-[200px]">At least 400x400px. JPG or PNG preferred.</p>
+              <div className="flex gap-2">
+                <Button variant="outline" className="rounded-xl h-9 text-xs px-4 border-zinc-200 dark:border-zinc-800 relative overflow-hidden group">
+                  <span className="relative z-10">Upload New</span>
+                  <input 
+                    type="file" 
+                    className="absolute inset-0 opacity-0 cursor-pointer z-20" 
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleAvatarUpload(file);
+                    }}
+                  />
+                </Button>
+                {updatedUser.avatarUrl && (
+                  <Button variant="ghost" className="rounded-xl h-9 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20" onClick={() => setUpdatedUser((u: any) => ({ ...u, avatarUrl: "" }))}>
+                    Remove
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-black dark:text-white">Last Name *</label>
-            <Input
-              type="text"
-              name="lastName"
-              value={updatedUser.lastName ?? ""}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="Last name"
-              className="border-zinc-900/30 placeholder:text-slate-600 dark:text-gray-400  rounded-md dark:border-gray-600" />
-          </div>
-        </div>
 
-        {/* Job & Company */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-black dark:text-white ">Job title </label>
+          <div className="space-y-2">
+            <label className={labelClasses}>Full Name</label>
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                name="firstName"
+                value={updatedUser.firstName || ""}
+                onChange={handleChange}
+                onFocus={() => setFocusedField("firstName")}
+                placeholder="First"
+                className={inputClasses}
+              />
+              <Input
+                name="lastName"
+                value={updatedUser.lastName || ""}
+                onChange={handleChange}
+                onFocus={() => setFocusedField("lastName")}
+                placeholder="Last"
+                className={inputClasses}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className={labelClasses}>Professional Title</label>
             <Input
-              type="text"
               name="jobTitle"
-              value={updatedUser.jobTitle ?? ""}
+              value={updatedUser.jobTitle || ""}
               onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="Senior Product Designer"
-              className="border-zinc-900/30 placeholder:text-slate-600 dark:text-white rounded-md dark:border-gray-600" />
+              placeholder="e.g. Creative Director"
+              className={inputClasses}
+            />
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-black dark:text-white">Company</label>
-            <Input
-              type="text"
-              name="company"
-              value={updatedUser.company ?? ""}
+
+          <div className="md:col-span-2 space-y-2">
+            <label className={labelClasses}>Biography</label>
+            <Textarea
+              name="bio"
+              value={updatedUser.bio || ""}
               onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="Acme Inc."
-              className="border-zinc-900/30 placeholder:text-slate-600 rounded-md dark:border-gray-600" />
+              placeholder="Tell your story in a few sentences..."
+              className="bg-white dark:bg-zinc-900 border-none ring-1 ring-zinc-200 dark:ring-zinc-800 focus:ring-2 focus:ring-[#FF7E5F] transition-all duration-300 rounded-3xl min-h-[120px] p-5 text-sm font-medium resize-none leading-relaxed"
+            />
           </div>
         </div>
+      </motion.section>
 
-        {/* Bio */}
-        <div>
-          <label className="block text-sm font-semibold text-black dark:text-white">Short bio *</label>
-          <Textarea
-            name="bio"
-            value={updatedUser.bio ?? ""}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            placeholder="Tell people a bit about you..."
-            rows={1}
-            className="resize-none border-zinc-900/30 placeholder:text-slate-600 rounded-md dark:border-gray-600" />
+      {/* SECTION: SOCIALS */}
+      <motion.section variants={itemVariants} className="space-y-6">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="h-1 w-8 bg-[#FEB47B] rounded-full" />
+          <h3 className="text-xl font-black tracking-tight">Connections</h3>
         </div>
 
-        {/* Contact + location */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-black dark:text-white">Email *</label>
-            <Input
-              type="email"
-              name="email"
-              value={updatedUser.email ?? ""}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="name@example.com"
-              className="border-zinc-900/30 placeholder:text-slate-600 rounded-md dark:border-gray-600" />
-            {touched.email && errors.email && (
-              <p className="text-xs text-red-600 mt-1">{errors.email}</p>
-            )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-2 relative group">
+            <label className={labelClasses}>Personal Website</label>
+            <div className="relative">
+              <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                name="website"
+                value={updatedUser.website || ""}
+                onChange={handleChange}
+                placeholder="https://youruniverse.com"
+                className={inputClasses + " pl-12"}
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-black dark:text-white ">Phone *</label>
-            <Input
-              type="tel"
-              name="phone"
-              value={updatedUser.phone ?? ""}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="+92..."
-              className="border-zinc-900/30 placeholder:text-slate-600 rounded-md dark:border-gray-600" />
+
+          <div className="space-y-2">
+            <label className={labelClasses}>Location Details</label>
+            <div className="space-y-4">
+              <div className="relative group">
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#FF7E5F]" />
+                <Input
+                  name="location"
+                  value={updatedUser.location || ""}
+                  onChange={handleChange}
+                  placeholder="San Francisco, CA"
+                  className={inputClasses + " pl-12 pr-12 transition-all group-hover:ring-orange-200 dark:group-hover:ring-orange-900"}
+                />
+                <Button 
+                  type="button"
+                  variant="ghost" 
+                  size="icon"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full hover:bg-orange-50 dark:hover:bg-orange-950/30 text-gray-400 hover:text-[#FF7E5F] transition-colors"
+                  onClick={async () => {
+                    console.log("[Geolocation] Requesting current position...");
+                    const toastId = toast.loading("Accessing satellite data...");
+                    
+                    if (!navigator.geolocation) {
+                      toast.error("GPS not supported on this device.", { id: toastId });
+                      return;
+                    }
+
+                    navigator.geolocation.getCurrentPosition(
+                      async (pos) => {
+                        const { latitude, longitude } = pos.coords;
+                        console.log(`[Geolocation] Lat: ${latitude}, Lng: ${longitude}`);
+                        
+                        try {
+                          // Using Nominatim (OSM) for demonstration as it's open-source
+                          // Specify accept-language=en for consistent naming (can be changed based on user locale)
+                          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=en`);
+                          const data = await res.json();
+                          const addr = data.address || {};
+                          console.log("[Geolocation] Comprehensive Geodata:", data);
+                          
+                          // Extreme robust "City" detection (Municipality, Postal City, and District fallbacks included)
+                          // Priority: City > Town > Municipality > Village > Suburb > District > County > State
+                          const city = addr.city || 
+                                       addr.town || 
+                                       addr.municipality || 
+                                       addr.postal_city ||
+                                       addr.village || 
+                                       addr.suburb || 
+                                       addr.city_district || 
+                                       addr.state_district ||
+                                       addr.county || 
+                                       addr.region || "";
+
+                          const country = addr.country || "";
+                          const state = addr.state || addr.province || "";
+                          
+                          // If city is still blank, try picking the first segment of display_name
+                          const cityFallback = !city && data.display_name ? data.display_name.split(',')[0].trim() : city;
+                          
+                          // Format: "City, State" if in the same country, or "City, Country"
+                          const displayRegion = cityFallback && state ? `${cityFallback}, ${state}` : (cityFallback || state || "Unknown Region");
+                          const fullLocation = [displayRegion, country].filter(Boolean).join(", ");
+                          
+                          console.log(`[Geolocation] Formatted Identity: ${fullLocation}`);
+                          setUpdatedUser((prev: any) => ({
+                            ...prev,
+                            location: fullLocation,
+                            lat: latitude,
+                            lng: longitude,
+                            city: cityFallback || state || "Unknown",
+                            country: country
+                          }));
+                          
+                          toast.success(`Identity localized: ${displayRegion}`, { id: toastId });
+                        } catch (err) {
+                          console.error("[Geolocation] Reverse geocoding failed:", err);
+                          toast.error("Failed to resolve city. Please enter manually.", { id: toastId });
+                        }
+                      },
+                      (error) => {
+                        console.error("[Geolocation] Error:", error);
+                        let msg = "Location access denied.";
+                        if (error.code === error.TIMEOUT) msg = "Location request timed out.";
+                        toast.error(msg, { id: toastId });
+                      },
+                      { timeout: 10000, enableHighAccuracy: true }
+                    );
+                  }}
+                >
+                  <Globe className="w-4 h-4 animate-pulse-slow" />
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter ml-2">Lat/Lng Lock</span>
+                  <div className="h-10 flex items-center px-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700 text-[10px] font-mono text-gray-500 overflow-hidden truncate">
+                    {updatedUser.lat ? `${Number(updatedUser.lat).toFixed(4)}, ${Number(updatedUser.lng).toFixed(4)}` : "Not anchored"}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter ml-2">Region</span>
+                  <div className="h-10 flex items-center px-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700 text-[10px] font-bold text-[#FF7E5F] truncate">
+                    {updatedUser.city ? `${updatedUser.city}, ${updatedUser.country}` : "Global"}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-black dark:text-white">Location </label>
-            <Input
-              type="text"
-              name="location"
-              value={updatedUser.location ?? ""}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="City, Country"
-              className="border-zinc-900/30 placeholder:text-slate-600 rounded-md dark:border-gray-600" />
+
+          <div className="space-y-2 lg:col-span-2">
+            <label className={labelClasses}>GitHub Handle</label>
+            <div className="relative">
+              <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                name="github"
+                value={updatedUser.github || ""}
+                onChange={handleChange}
+                placeholder="github.com/..."
+                className={inputClasses + " pl-12"}
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-black dark:text-white">Website </label>
-            <Input
-              type="url"
-              name="website"
-              value={updatedUser.website ?? ""}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="https://..."
-              className="border-zinc-900/30 placeholder:text-slate-600 rounded-md dark:border-gray-600" />
-            {touched.website && errors.website && (
-              <p className="text-xs text-red-600 mt-1">{errors.website}</p>
-            )}
+
+          <div className="space-y-2">
+            <label className={labelClasses}>Twitter Profile</label>
+            <div className="relative">
+              <Twitter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                name="twitter"
+                value={updatedUser.twitter || ""}
+                onChange={handleChange}
+                placeholder="twitter.com/username"
+                className={inputClasses + " pl-12"}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className={labelClasses}>LinkedIn Profile</label>
+            <div className="relative">
+              <Linkedin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                name="linkedin"
+                value={updatedUser.linkedin || ""}
+                onChange={handleChange}
+                placeholder="linkedin.com/in/username"
+                className={inputClasses + " pl-12"}
+              />
+            </div>
           </div>
         </div>
+      </motion.section>
 
-        {/* Social links */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-black dark:text-white">GitHub </label>
-            <Input
-              type="url"
-              name="github"
-              value={updatedUser.github ?? ""}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="https://github.com/username"
-              className="border-zinc-900/30 placeholder:text-slate-600 rounded-md dark:border-gray-600" />
-            {touched.github && errors.github && (
-              <p className="text-xs mt-1 text-gray-200">{errors.github}</p>
-            )}
+      {/* FIXED FOOTER ACTIONS */}
+      <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-t border-zinc-200/50 dark:border-zinc-800/50 z-50">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-500">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+            Live Syncing
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-black dark:text-white">LinkedIn </label>
-            <Input
-              type="url"
-              name="linkedin"
-              value={updatedUser.linkedin ?? ""}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="https://linkedin.com/in/username"
-              className="border-zinc-900/30 placeholder:text-slate-600 rounded-md dark:border-gray-600" />
-            {touched.linkedin && errors.linkedin && (
-              <p className="text-xs text-red-600 mt-1">{errors.linkedin}</p>
-            )}
+          
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <Button
+              variant="ghost"
+              onClick={onCancel}
+              disabled={isSaving}
+              className="flex-1 md:flex-none h-12 px-8 rounded-2xl font-bold uppercase tracking-widest text-[10px] text-gray-500"
+            >
+              Discard
+            </Button>
+            <Button
+              id="primary-save-btn"
+              onClick={handleSave}
+              disabled={isSaving || uploadingAvatar}
+              className="flex-[2] md:flex-none h-12 px-12 rounded-2xl bg-gradient-to-tr from-[#FF7E5F] to-[#FEB47B] text-white font-black uppercase tracking-widest text-[10px] shadow-xl hover:scale-105 active:scale-95 transition-all group"
+            >
+              {isSaving ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent animate-spin rounded-full" />
+                  Updating...
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Check size={16} />
+                  Save Changes
+                </div>
+              )}
+            </Button>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-black dark:text-white">Twitter/X </label>
-            <Input
-              type="url"
-              name="twitter"
-              value={updatedUser.twitter ?? ""}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="https://x.com/username"
-              className="border-zinc-900/30 placeholder:text-slate-600 rounded-md dark:border-gray-600" />
-            {touched.twitter && errors.twitter && (
-              <p className="text-xs text-red-600 mt-1">{errors.twitter}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Skills / Hobbies */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-black dark:text-white">Skills </label>
-            <Input
-              type="text"
-              name="skillsText"
-              value={updatedUser.skillsText ?? ""}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="React, Next.js, SQL"
-              className="border-zinc-900/30 placeholder:text-slate-600 rounded-md dark:border-gray-600" />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-black dark:text-white">Hobbies </label>
-            <Input
-              type="text"
-              name="hobbiesText"
-              value={updatedUser.hobbiesText ?? ""}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="Cricket, Reading"
-              className="border-zinc-900/30 placeholder:text-slate-600 rounded-md dark:border-gray-600" />
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSaving || uploadingAvatar}
-            className="transition-all duration-300 ease-in-out transform hover:scale-105 shadow-md">
-            Cancel
-          </Button>
-          <Button
-            className="transition-all duration-300 ease-in-out transform hover:scale-105 shadow-md"
-            type="button"
-            onClick={handleSave}
-            disabled={!isValid || isSaving || uploadingAvatar}>
-            {isSaving ? "Saving..." : "Save"}
-          </Button>
         </div>
       </div>
-    </Card>
+    </motion.div>
   );
 };
 

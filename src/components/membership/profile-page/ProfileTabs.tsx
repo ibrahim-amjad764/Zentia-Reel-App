@@ -302,11 +302,3 @@ export default function ProfileTabs({
     </div>
   );
 }
-
-
-
-// i wantto make when in post section show  like option or or like it
-
-// Keep in mind my style, preferences, and values: I like answers that are practical, well-commented, and efficient, showing real-world best practices. Tailor all responses to these preferences, including modern methods over outdated ones, comenting for what purpose use, optimized way to handle code ,  robust version,  must write with console log
-
-// Any file I send, do not make any changes to it. Just update it without changing anything.

@@ -15,31 +15,15 @@ import EditProfileForm from "./EditProfileForm";
 
 /** Props: user data, save/cancel handlers, saving state */
 interface ProfileContentProps {
-  user: {
-    id?: string;
-    firstName?: string;
-    lastName?: string;
-    email: string;
-    avatarUrl?: string;
-    bio?: string;
-    jobTitle?: string;
-    company?: string;
-    phone?: string;
-    location?: string;
-    website?: string;
-    github?: string;
-    linkedin?: string;
-    twitter?: string;
-    skills?: string[];
-    hobbies?: string[];
-  };
+  user: any;
   onSave: (user: unknown) => Promise<void>;
   onCancel: () => void;
   isSaving: boolean;
+  onUpdate: (updated: any) => void;
 }
 
 /** Tabbed profile editor: Personal (form), Account, Security, Notifications (UI placeholders) */
-export default function ProfileContent({ user, onSave, onCancel, isSaving }: ProfileContentProps) {
+export default function ProfileContent({ user, onSave, onCancel, isSaving, onUpdate }: ProfileContentProps) {
   const [emailNotif, setEmailNotif] = useState(true);
   const [pushNotif, setPushNotif] = useState(false);
   const [marketingEmails, setMarketingEmails] = useState(true);
@@ -53,117 +37,89 @@ export default function ProfileContent({ user, onSave, onCancel, isSaving }: Pro
   };
 
   return (
-    <Tabs defaultValue="personal" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="personal">Personal</TabsTrigger>
-        <TabsTrigger value="account">Account</TabsTrigger>
-        <TabsTrigger value="security">Security</TabsTrigger>
-        <TabsTrigger value="notifications">Notifications</TabsTrigger>
+    <Tabs defaultValue="personal" className="space-y-12">
+      <TabsList className="bg-transparent border-b border-zinc-200 dark:border-zinc-800 w-full justify-start h-auto p-0 gap-8 rounded-none">
+        <TabsTrigger 
+          value="personal" 
+          className="bg-transparent px-0 py-4 border-b-2 border-transparent data-[state=active]:border-[#FF7E5F] data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none text-xs font-bold uppercase tracking-widest text-gray-400 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white transition-all"
+        >
+          General
+        </TabsTrigger>
+        <TabsTrigger 
+          value="account" 
+          className="bg-transparent px-0 py-4 border-b-2 border-transparent data-[state=active]:border-[#FF7E5F] data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none text-xs font-bold uppercase tracking-widest text-gray-400 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white transition-all"
+        >
+          Account
+        </TabsTrigger>
+        <TabsTrigger 
+          value="security" 
+          className="bg-transparent px-0 py-4 border-b-2 border-transparent data-[state=active]:border-[#FF7E5F] data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none text-xs font-bold uppercase tracking-widest text-gray-400 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white transition-all"
+        >
+          Security
+        </TabsTrigger>
+        <TabsTrigger 
+          value="notifications" 
+          className="bg-transparent px-0 py-4 border-b-2 border-transparent data-[state=active]:border-[#FF7E5F] data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none text-xs font-bold uppercase tracking-widest text-gray-400 data-[state=active]:text-gray-900 dark:data-[state=active]:text-white transition-all"
+        >
+          Notifications
+        </TabsTrigger>
       </TabsList>
 
       {/* Personal: editable form */}
-      <TabsContent value="personal" className="space-y-6">
-        <EditProfileForm user={user} onSave={onSave} onCancel={onCancel} isSaving={isSaving} />
+      <TabsContent value="personal" className="mt-0">
+        <EditProfileForm 
+          user={user} 
+          onSave={onSave} 
+          onCancel={onCancel} 
+          isSaving={isSaving} 
+          onUpdate={onUpdate}
+        />
       </TabsContent>
 
-      {/* Account: UI only, toasts on action */}
-      <TabsContent value="account" className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Account Settings</CardTitle>
-            <CardDescription>Manage your account preferences.</CardDescription>
+      {/* Account Settings */}
+      <TabsContent value="account" className="space-y-6 mt-0">
+        <Card className="border-none bg-white dark:bg-zinc-900/50 shadow-sm rounded-[2rem] overflow-hidden">
+          <CardHeader className="px-8 pt-8 pb-4">
+            <CardTitle className="text-xl font-bold">Account Settings</CardTitle>
+            <CardDescription>Manage your primary account identity and visibility.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between">
+          <CardContent className="px-8 pb-8 space-y-6">
+            <div className="flex items-center justify-between py-4">
               <div className="space-y-1">
-                <Label className="text-base">Account Status</Label>
-                <p className="text-muted-foreground text-sm">Your account is currently active</p>
+                <Label className="text-sm font-bold uppercase tracking-wider">Status</Label>
+                <p className="text-muted-foreground text-xs font-medium">Your account is safe and active.</p>
               </div>
-              <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">
-                Active
+              <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-none px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                Protected
               </Badge>
             </div>
-            <Separator />
-            <div className="flex items-center justify-between">
+            <Separator className="bg-zinc-100 dark:bg-zinc-800" />
+            <div className="flex items-center justify-between py-4">
               <div className="space-y-1">
-                <Label className="text-base">Account Visibility</Label>
-                <p className="text-muted-foreground text-sm">Make your profile visible to other users</p>
+                <Label className="text-sm font-bold uppercase tracking-wider">Visibility</Label>
+                <p className="text-muted-foreground text-xs font-medium">Allow others to see your collections.</p>
               </div>
               <Switch checked={profileVisible} onCheckedChange={setProfileVisible} />
             </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-base">Data Export</Label>
-                <p className="text-muted-foreground text-sm">Download a copy of your data</p>
-              </div>
-              <Button variant="outline" onClick={() => handleAccountAction("Data export requested")}>
-                Export Data
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-destructive/50">
-          <CardHeader>
-            <CardTitle className="text-destructive">Danger Zone</CardTitle>
-            <CardDescription>Irreversible and destructive actions</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-base">Delete Account</Label>
-                <p className="text-muted-foreground text-sm">Permanently delete your account and all data</p>
-              </div>
-              <Button
-                variant="destructive"
-                className="bg-red-600"
-                onClick={() => {
-                  console.warn("[ProfileContent] Delete account clicked");
-                  toast.error("Delete account is not implemented"); }}>
-                <Trash2 className="mr-2 h-4 w-4 " />
-                Delete Account
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </TabsContent>
-
+      
       {/* Security: UI only */}
-      <TabsContent value="security" className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Security Settings</CardTitle>
-            <CardDescription>Manage your account security.</CardDescription>
+      <TabsContent value="security" className="space-y-6 mt-0">
+        <Card className="border-none bg-white dark:bg-zinc-900/50 shadow-sm rounded-[2rem] overflow-hidden">
+          <CardHeader className="px-8 pt-8 pb-4">
+            <CardTitle className="text-xl font-bold">Security & Access</CardTitle>
+            <CardDescription>Secure your presence with advanced protection.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between">
+          <CardContent className="px-8 pb-8">
+            <div className="flex items-center justify-between py-4">
               <div className="space-y-1">
-                <Label className="text-base">Password</Label>
-                <p className="text-muted-foreground text-sm">Last changed 3 months ago</p>
+                <Label className="text-sm font-bold uppercase tracking-wider">Passkey</Label>
+                <p className="text-muted-foreground text-xs font-medium">Last synced 5 days ago.</p>
               </div>
-              <Button variant="outline" onClick={() => handleAccountAction("Change password requested")}>
-                <Key className="mr-2 h-4 w-4" />
-                Change Password
-              </Button>
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-base">Login Notifications</Label>
-                <p className="text-muted-foreground text-sm">Get notified when someone logs into your account</p>
-              </div>
-              <Switch checked={loginNotif} onCheckedChange={setLoginNotif} />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-base">Active Sessions</Label>
-                <p className="text-muted-foreground text-sm">Manage devices logged into your account</p>
-              </div>
-              <Button variant="outline" onClick={() => handleAccountAction("View sessions requested")}>
-                <Shield className="mr-2 h-4 w-4" />
-                View Sessions
+              <Button size="sm" variant="outline" className="rounded-xl font-bold text-[10px] uppercase tracking-widest" onClick={() => handleAccountAction("Auth sync requested")}>
+                Update
               </Button>
             </div>
           </CardContent>
@@ -171,44 +127,25 @@ export default function ProfileContent({ user, onSave, onCancel, isSaving }: Pro
       </TabsContent>
 
       {/* Notifications: toggles (local state) */}
-      <TabsContent value="notifications" className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Notification Preferences</CardTitle>
-            <CardDescription>Choose what notifications you want to receive.</CardDescription>
+      <TabsContent value="notifications" className="space-y-6 mt-0">
+        <Card className="border-none bg-white dark:bg-zinc-900/50 shadow-sm rounded-[2rem] overflow-hidden">
+          <CardHeader className="px-8 pt-8 pb-4">
+            <CardTitle className="text-xl font-bold">Inbox Pulse</CardTitle>
+            <CardDescription>Fine-tune how and when you receive updates.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-base">Email Notifications</Label>
-                <p className="text-muted-foreground text-sm">Receive notifications via email</p>
+          <CardContent className="px-8 pb-8 space-y-4">
+            {[ 
+              { id: 'email', label: 'Email Logs', desc: 'Detailed updates via primary inbox', state: emailNotif, set: setEmailNotif },
+              { id: 'marketing', label: 'Beta Invites', desc: 'Early access to upcoming features', state: marketingEmails, set: setMarketingEmails }
+            ].map((item) => (
+              <div key={item.id} className="flex items-center justify-between py-2">
+                <div className="space-y-0.5">
+                  <Label className="text-sm font-bold">{item.label}</Label>
+                  <p className="text-muted-foreground text-[11px] font-medium opacity-70">{item.desc}</p>
+                </div>
+                <Switch checked={item.state} onCheckedChange={item.set} />
               </div>
-              <Switch checked={emailNotif} onCheckedChange={setEmailNotif} />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-base">Push Notifications</Label>
-                <p className="text-muted-foreground text-sm">Receive push notifications in your browser</p>
-              </div>
-              <Switch checked={pushNotif} onCheckedChange={setPushNotif} />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-base">Marketing Emails</Label>
-                <p className="text-muted-foreground text-sm">Receive emails about new features and updates</p>
-              </div>
-              <Switch checked={marketingEmails} onCheckedChange={setMarketingEmails} />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-base">Weekly Summary</Label>
-                <p className="text-muted-foreground text-sm">Get a weekly summary of your activity</p>
-              </div>
-              <Switch checked={weeklySummary} onCheckedChange={setWeeklySummary} />
-            </div>
+            ))}
           </CardContent>
         </Card>
       </TabsContent>

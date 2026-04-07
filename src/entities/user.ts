@@ -58,6 +58,18 @@ export class User {
   @Column({ type: "varchar", length: 255, nullable: true })
   twitter?: string;
 
+  @Column({ type: "decimal", precision: 10, scale: 7, nullable: true })
+  lat?: number;
+
+  @Column({ type: "decimal", precision: 10, scale: 7, nullable: true })
+  lng?: number;
+
+  @Column({ type: "varchar", length: 255, nullable: true })
+  city?: string;
+
+  @Column({ type: "varchar", length: 255, nullable: true })
+  country?: string;
+
   @Column({ type: "text", array: true, nullable: true })
   skills?: string[];
 

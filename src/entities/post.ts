@@ -20,6 +20,18 @@ export class Post {
   @Column({ type: "simple-array", default: [] })
   images!: string[];
 
+  @Column({ type: "decimal", precision: 10, scale: 7, nullable: true })
+  lat?: number;
+
+  @Column({ type: "decimal", precision: 10, scale: 7, nullable: true })
+  lng?: number;
+
+  @Column({ type: "varchar", length: 255, nullable: true })
+  city?: string;
+
+  @Column({ type: "varchar", length: 255, nullable: true })
+  country?: string;
+
   // Relations use string references to avoid circular imports
   @ManyToOne("User", "posts", { nullable: false, onDelete: "CASCADE" })
   user!: User;

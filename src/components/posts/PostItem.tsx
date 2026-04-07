@@ -6,6 +6,8 @@ import React from "react";
 import UserProfileSummary from "../membership/profile-page/UserProfileSummary";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { LikeButton } from "./likes/LikeButton";
+import { Heart } from "lucide-react";
 
 interface Comment {
   id: string;
@@ -22,14 +24,16 @@ interface Post {
   likesCount: number;
   comments?: Comment[];
   user: { id: string; firstName?: string; avatarUrl?: string };
+  isLikedByUser?: boolean; // Added to track like state
 }
 
 interface PostItemProps {
   post: Post;
+  userId?: string; // Added for LikeButton functionality
 }
 
-export default function PostItem({ post }: PostItemProps) {
-  console.log("[PostItem] Rendering post:", post.id);
+export default function PostItem({ post, userId }: PostItemProps) {
+  console.log("[PostItem] Rendering post:", post.id, "isLikedByUser:", post.isLikedByUser);
 
   return (
     <Card className="p-5 max-w-3xl mx-auto">
@@ -61,13 +65,27 @@ export default function PostItem({ post }: PostItemProps) {
         </div>
       ) : null}
 
-      <div className="w-full flex justify-end mt-1">
+      <div className="w-full flex justify-between items-center mt-1">
         <p className="text-xs text-muted-foreground">{new Date(post.createdAt).toLocaleString()}</p>
+        
+        {/* Like Button - shows colored state if already liked */}
+        {userId && (
+          <LikeButton
+            postId={post.id}
+            initialIsLiked={post.isLikedByUser || false}
+            initialLikesCount={post.likesCount || 0}
+            userId={userId}
+          />
+        )}
       </div>
 
-      <p className="font-semibold text-sm mt-2 text-foreground/90">
-        Likes: <span className="italic text-muted-foreground">{post.likesCount || 0}</span>
-      </p>
+      {/* Fallback display if no userId provided */}
+      {!userId && (
+        <p className="font-semibold text-sm mt-2 text-foreground/90 flex items-center gap-2">
+          <Heart className={`h-4 w-4 ${post.isLikedByUser ? "fill-current text-red-500" : ""}`} />
+          Likes: <span className="italic text-muted-foreground">{post.likesCount || 0}</span>
+        </p>
+      )}
 
       <div className="text-sm mt-2">
         <p className="font-semibold mb-1 text-foreground/90">

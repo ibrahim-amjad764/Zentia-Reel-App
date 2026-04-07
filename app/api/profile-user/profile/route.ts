@@ -99,7 +99,6 @@ export async function GET() {
     const repo = AppDataSource!.getRepository(User);
 
     const user = await getAuthUser(repo);
-
     if (!user) {
       console.log("Unauthorized access or User not found.");
       return Response.json(
@@ -108,8 +107,26 @@ export async function GET() {
       );
     }
 
-    console.log("[Profile API] GET success:", user.email);
-    return Response.json(user);
+    // Efficiently count followers and following using relations
+    const followersCount = await repo
+      .createQueryBuilder("u")
+      .innerJoin("u.followers", "f")
+      .where("u.id = :id", { id: user.id })
+      .getCount();
+
+    const followingCount = await repo
+      .createQueryBuilder("u")
+      .innerJoin("u.following", "f")
+      .where("u.id = :id", { id: user.id })
+      .getCount();
+
+    console.log(`[Profile API] GET success for ${user.email}. Followers: ${followersCount}, Following: ${followingCount}`);
+    
+    return Response.json({
+      ...user,
+      followersCount,
+      followingCount
+    });
 
   } catch (err) {
     console.log("GET /api/profile-user/profile ERROR:", err);
@@ -163,6 +180,10 @@ export async function PUT(req: Request) {
       twitter: typeof body?.twitter === "string" ? body.twitter.trim() : target.twitter,
       skills: normalizeTags(body?.skills) ?? target.skills,
       hobbies: normalizeTags(body?.hobbies) ?? target.hobbies,
+      lat: typeof body?.lat === "number" ? body.lat : target.lat,
+      lng: typeof body?.lng === "number" ? body.lng : target.lng,
+      city: typeof body?.city === "string" ? body.city.trim() : target.city,
+      country: typeof body?.country === "string" ? body.country.trim() : target.country,
     };
 
     Object.assign(target, update);

@@ -24,98 +24,60 @@ import Loader from "../../../components/ui/Loader";
 import Image from "next/image";
 import { ModeToggleButton } from "../../../components/ui/mode-toggle";
 import { PremiumModeToggle } from "../../../components/ui/premium-mode-toggle";
+import PremiumNavbar from "../../../components/layout/PremiumNavbar";
 
-interface User {
-  id: string;
+import EditProfilePreview from "../../../src/components/membership/profile-page/EditProfilePreview";
+import { motion, AnimatePresence } from "framer-motion";
+
+interface ProfileUser {
+  id?: string;
   firstName?: string;
-  lastName?: string | null;
+  lastName?: string;
   email: string;
+  avatarUrl?: string;
+  bio?: string;
+  jobTitle?: string;
+  company?: string;
+  phone?: string;
+  location?: string;
+  website?: string;
+  github?: string;
+  linkedin?: string;
+  twitter?: string;
+  skills?: string[];
+  hobbies?: string[];
+  followersCount?: number;
+  followingCount?: number;
 }
-interface Post {
-  id: string;
-  content: string;
-  images?: string[];
-  createdAt: string;
-  user: User;
-  likesCount?: number;
-  time?: string;
-}
-interface FetchPostsResponse {
-  posts: Post[];
-  hasMore: boolean;
-}
+
 const EditProfilePage = () => {
-  const [user, setUser] = useState<{
-    id?: string;
-    firstName?: string;
-    lastName?: string;
-    email: string;
-    avatarUrl?: string;
-    bio?: string;
-    jobTitle?: string;
-    company?: string;
-    phone?: string;
-    location?: string;
-    website?: string;
-    github?: string;
-    linkedin?: string;
-    twitter?: string;
-    skills?: string[];
-    hobbies?: string[];
-  } | null>(null);
+  const [user, setUser] = useState<ProfileUser | null>(null);
+  const [previewUser, setPreviewUser] = useState<ProfileUser | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [openPost, setOpenPost] = useState(false);
-  const [query, setQuery] = useState("")
+  const [query, setQuery] = useState("");
   const [users, setUsers] = useState<
     { id: string | number; username: string; email: string; firstName?: string; lastName?: string }[]
   >([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [page, setPage] = useState(1);
   const debouncedQuery = useDebounce(query, 400);
-  const { data, isLoading, isError } = useQuery<FetchPostsResponse>({
-    queryKey: ["posts", page],
-    queryFn: () => fetchPosts(page),
-    retry: 2,
-    placeholderData: (prev: FetchPostsResponse | undefined) => prev,
-  });
+
   // Determine where the user came from
   const fromPage = searchParams.get("from") || "";
-  const fetchPosts = async (page: number): Promise<FetchPostsResponse> => {
-    try {
-      const res = await authFetch(`/api/posts?page=${page}&limit=5`);
-      if (!res.ok) {
-        throw new Error(`Failed to fetch posts: ${res.status} ${res.statusText}`);
-      }
-
-      const contentType = res.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Expected JSON response but received HTML");
-      }
-
-      const data = await res.json();
-      if (Array.isArray(data)) return { posts: data, hasMore: true };
-      return { posts: data.posts || [], hasMore: data.hasMore || false };
-    } catch (error) {
-      console.error("Error fetching posts:", error);
-      return { posts: [], hasMore: false };
-    }
-  };
 
   useEffect(() => {
-    document.title = "Edit Profile | My Next JS App";
+    document.title = "Elite Edit Profile | Zentia Universe";
+    console.log("[EditProfilePage] Initializing premium editing experience.");
   }, []);
 
   useEffect(() => {
     const fetchUsers = async () => {
       if (!debouncedQuery) {
-        console.log(" Clearing search results");
         setUsers([]);
         return;
       }
-
-      console.log(" Debounced search:", debouncedQuery);
       setSearchLoading(true);
       const results = await searchUsers(debouncedQuery);
       setUsers(results);
@@ -130,7 +92,8 @@ const EditProfilePage = () => {
       try {
         const userProfile = await fetchUserProfile();
         setUser(userProfile);
-        console.log("[EditProfilePage] User data loaded", userProfile);
+        setPreviewUser(userProfile);
+        console.log("[EditProfilePage] Success: User data loaded for edit.", userProfile.email);
       } catch (error) {
         console.error("[EditProfilePage] Fetch error:", error);
         toast.error("Failed to load profile.");
@@ -139,39 +102,41 @@ const EditProfilePage = () => {
     void getUserData();
   }, []);
 
-  // Save updated profile
-  const handleSave = async (updatedUser: unknown) => {
+  const handleUpdatePreview = (updated: Partial<ProfileUser>) => {
+    setPreviewUser(prev => prev ? { ...prev, ...updated } : null);
+  };
+
+  const handleSave = async (payload: any) => {
     setIsSaving(true);
+    console.log("[EditProfilePage] Initiating profile save...", payload.email);
     try {
-      await updateUserProfile(updatedUser);
-      toast.success("Profile saved successfully!");
-      router.push("/profile"); // always go to profile after saving
+      await updateUserProfile(payload);
+      toast.success("Golden updates saved successfully!", {
+        description: "Your universe reflects these changes now.",
+        icon: "✨"
+      });
+      router.push("/profile");
     } catch (error) {
       console.error("[EditProfilePage] Save error:", error);
-      toast.error("Failed to update profile");
+      toast.error("Elite update failed. Please try again.");
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleSearch = async () => {
-    console.log(" Manual search:", query);
     setSearchLoading(true);
     const results = await searchUsers(query);
     setUsers(results);
     setSearchLoading(false);
   };
 
-  // Cancel / Back button
   const handleBack = () => {
-    console.log("[EditProfilePage] Handling back navigation, fromPage:", fromPage);
-
-    // If there is a from query param, go there
+    console.log("[EditProfilePage] Navigation request: Back to", fromPage || "Profile");
     if (fromPage) {
       router.push(fromPage);
       return;
     }
-
     if (window.history.length > 1) {
       router.back();
     } else {
@@ -179,141 +144,106 @@ const EditProfilePage = () => {
     }
   };
 
-  // if (!user)
-  //   return <Loader title="Loading form..." subtitle="Preparing your profile data" size="lg" />;
+  if (!user || !previewUser) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-zinc-950">
+        <Loader 
+          title="Preparing Editor" 
+          subtitle="Aligning your universe..." 
+          size="lg" 
+        />
+      </div>
+    );
+  }
 
-  if (!user) {
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Loader 
-        title="Loading profile..." 
-        subtitle="Preparing your profile data" 
-        size="lg" 
-      />
-    </div>
-  );
-}
-return (
-  <SidebarProvider>
-    <div className="flex min-h-dvh w-full flex-col bg-[#F8FAFC] dark:bg-zinc-950">
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full flex-col bg-zinc-50 dark:bg-[#050505] overflow-x-hidden">
 
-      {/* HEADER */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 dark:bg-zinc-900/70 border-b border-gray-200 dark:border-zinc-800">
-        <div className="mx-auto flex max-w-8xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+        {/* PREMIUM NAVIGATION */}
+        <PremiumNavbar 
+          query={query}
+          setQuery={setQuery}
+          handleSearch={handleSearch}
+          searchLoading={searchLoading}
+          users={users}
+        />
 
-          {/* Logo */}
-          <Link href="/feed" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 dark:border-zinc-700">
-              <Image
-                src="/logo.png"
-                alt="Logo"
-                width={40}
-                height={40}
-                className="object-cover w-full h-full"
-              />
+        {/* MAIN STAGE */}
+        <main className="flex-1">
+          <div className="max-w-7xl mx-auto px-4 md:px-12 py-8 md:py-16">
+            
+            {/* STICKY MOBILE HEADER */}
+            <div className="flex items-center justify-between mb-12 sticky top-24 z-20 backdrop-blur-lg py-2 px-4 rounded-full bg-white/50 dark:bg-zinc-900/50 border border-white/20 sm:relative sm:top-0 sm:bg-transparent sm:backdrop-blur-none sm:p-0 sm:border-none sm:mb-16">
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleBack}
+                  className="rounded-2xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-sm hover:scale-110 active:scale-95 transition-all"
+                >
+                  ←
+                </Button>
+                <div>
+                  <h2 className="text-xl md:text-3xl font-black tracking-tight text-gray-900 dark:text-white">
+                    Edit Universe
+                  </h2>
+                  <p className="hidden md:block text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-widest mt-1">
+                    Refine your digital presence
+                  </p>
+                </div>
+              </div>
+
+              {/* SAVE SHORTCUT (Mobile Only) */}
+              <div className="sm:hidden">
+                <Button 
+                   onClick={() => (document.getElementById("primary-save-btn") as HTMLButtonElement)?.click()}
+                   disabled={isSaving}
+                   className="rounded-full px-6 bg-[#FF7E5F] text-white text-xs font-black"
+                >
+                  {isSaving ? "..." : "Done"}
+                </Button>
+              </div>
             </div>
-            <span className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
-              Zentia
-            </span>
-          </Link>
 
-          {/* Search */}
-          <div className="relative w-full max-w-md hidden sm:block">
-            <SearchBar
-              value={query}
-              onChange={setQuery}
-              onSearch={handleSearch}
-              placeholder="Search the universe..."
-            />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
+              
+              {/* LIVE PREVIEW (4/12) - Left Column */}
+              <aside className="order-2 lg:order-1 lg:col-span-4 h-fit">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                >
+                  <EditProfilePreview data={previewUser} />
+                </motion.div>
+              </aside>
 
-            {(query || searchLoading) && (
-              <SearchSuggestions
-                users={users}
-                loading={searchLoading}
-                query={query}
-              />
-            )}
+              {/* EDITING FORM (8/12) - Right Column */}
+              <div className="order-1 lg:order-2 lg:col-span-8 space-y-12">
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+                >
+                  <ProfileContent
+                    user={user}
+                    onSave={handleSave}
+                    onCancel={handleBack}
+                    isSaving={isSaving}
+                    onUpdate={handleUpdatePreview}
+                  />
+                </motion.div>
+              </div>
+
+            </div>
           </div>
+        </main>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <NotificationBell />
-            <PremiumModeToggle/>
-
-            <Button
-              size="sm"
-              onClick={() => setOpenPost(true)}
-              className="rounded-full px-4 bg-gray-900 text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 transition-all active:scale-95"
-            >
-              New Post
-            </Button>
-          </div>
-        </div>
-
-        {/* Mobile Search */}
-        <div className="px-4 pb-3 sm:hidden">
-          <SearchBar
-            value={query}
-            onChange={setQuery}
-            onSearch={handleSearch}
-            placeholder="Search users..."
-          />
-
-          {(query || searchLoading) && (
-            <SearchSuggestions
-              users={users}
-              loading={searchLoading}
-              query={query}
-            />
-          )}
-        </div>
-      </header>
-
-      {/* MAIN */}
-      <main className="flex-1">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-
-          {/* Top Bar */}
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={handleBack}
-              className="rounded-full px-4 py-2 text-sm border-gray-300 dark:border-zinc-700 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all active:scale-95"
-            >
-              ← Back
-            </Button>
-          </div>
-
-          {/* Header Text */}
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">
-              Edit Profile
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-              Update your personal info, account settings, and preferences.
-            </p>
-          </div>
-
-          {/* Profile Card */}
-          <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl shadow-sm p-6 sm:p-8">
-            <ProfileContent
-              user={user}
-              onSave={handleSave}
-              onCancel={handleBack}
-              isSaving={isSaving}
-            />
-          </div>
-
-        </div>
-      </main>
-
-      {/* Modal */}
-      <CreatePostModal
-        open={openPost}
-        onClose={() => setOpenPost(false)}
-      />
-    </div>
-  </SidebarProvider>
-);
+        <CreatePostModal open={openPost} onClose={() => setOpenPost(false)} />
+      </div>
+    </SidebarProvider>
+  );
 };
+
 export default EditProfilePage;
