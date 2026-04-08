@@ -148,6 +148,8 @@ next-typeorm-postgres/
 │   │   │   │   └── route.ts
 │   │   │   ├── like/
 │   │   │   │   └── route.ts
+│   │   │   ├── location-feed/
+│   │   │   │   └── route.ts
 │   │   │   └── route.ts
 │   │   │
 │   │   ├── profile-user/
@@ -157,6 +159,8 @@ next-typeorm-postgres/
 │   │   │   └── user.ts
 │   │   │
 │   │   ├── upload/
+│   │   │   ├── location/
+│   │   │   │    └── route.ts
 │   │   │   └── route.ts
 │   │   │
 │   │   └── users/
@@ -196,17 +200,112 @@ next-typeorm-postgres/
 │   ├── layout.tsx
 │   └── page.tsx
 │
+│── components/                
+│    ├── layout/
+│    └──ui/
+│              
 ├── src/
 │   ├── components/                 # Reusable UI components
 │   │   ├── membership/            # Profile components
-│   │   ├── posts/                # Post-related components
+│   │   │      ├── forget-page
+│   │   │      │     └── forgot-password-form.tsx
+│   │   │      │     
+│   │   │      ├── login-page
+│   │   │      │     ├── login-form.tsx
+│   │   │      │     └── login-page-01.tsx
+│   │   │      │     
+│   │   │      ├── logout-page
+│   │   │      │     └── logout-form.tsx
+│   │   │      │     
+│   │   │      ├── profile-page
+│   │   │      │     ├── EditProfileForm.tsx
+│   │   │      │     ├── EditProfilePreview.tsx
+│   │   │      │     ├── FollowButton.tsx
+│   │   │      │     ├── ProfileAboutPlanel.tsx
+│   │   │      │     ├── ProfileCard.tsx
+│   │   │      │     ├── ProfileContent.tsx
+│   │   │      │     ├── ProfileHeader.tsx
+│   │   │      │     ├── ProfilePageClient.tsx
+│   │   │      │     ├── ProfileTabs.tsx
+│   │   │      │     ├── UserProfileCard.tsx
+│   │   │      │     └── UserProfileSummary.tsx
+│   │   │      │     
+│   │   │      ├── signup-page
+│   │   │            └──signup-form.tsx
+│   │   │      
+│   │   ├── navbar/            # Profile components
+│   │   │     └── navbar.tsx
+│   │   │     
 │   │   ├── notifications/         # Notification system
-│   │   └── ui/                  # Base UI components
+│   │   │     ├── NotificationBell.tsx
+│   │   │     ├── NotificationDropdown.tsx
+│   │   │     ├── NotificationItem.tsx
+│   │   │     ├── SearchBar
+│   │   │     └──SearchSugggestion.tsx
+│   │   │
+│   │   ├── posts/                # Post-related components
+│   │   │     ├── likes/                
+│   │   │     │     ├── LikeButton.tsx
+│   │   │     ├── comments/                
+│   │   │     │     ├──CommentSection.tsx
+│   │   │     ├── share/                
+│   │   │     │     ├──ShareButton.tsx
+│   │   │     ├── CreatePostModal.tsx
+│   │   │     ├── Post.tsx
+│   │   │     └── PostItem.tsx
+│   │   │              
+│   │   └── shared/                
+│   │         ├── BackButton.tsx
+│   │         └── LinkToUserProfile.tsx
+│   │                      
+│   ├── db/                 
+│   │    ├── data-source.ts
+│   │    └──init-db.ts
+│   │
 │   ├── entities/                  # TypeORM database models
+│   │      ├── comment.ts
+│   │      ├── follow.ts
+│   │      ├── like.ts
+│   │      ├── notification.ts
+│   │      ├── post.ts
+│   │      └── user.ts
+│   ├── hooks/             
+│   │      └── userParallax.ts
+│   │      
 │   ├── lib/                      # Utility functions
+│   │    ├── api.ts
+│   │    ├── auth.ts
+│   │    ├── cloudinary.ts
+│   │    ├── firebase-admin.ts
+│   │    ├── firebase.ts
+│   │    ├── mappers.ts
+│   │    ├── notificationSocket.ts
+│   │    ├── notificationWsSocket.ts
+│   │    ├── profileHelper.ts
+│   │    ├── useDebounce.ts
+│   │    ├── utils.ts
+│   │    └── websocket.ts
+│   │    
+│   ├── provider/             
+│   │    └── ReactQueryProvider.ts
+│   │    
 │   ├── services/                 # Business logic
+│   │    ├── Auth.service.ts
+│   │    ├── follow.service.ts
+│   │    ├── notification.service.ts
+│   │    └── user.service.ts
+│   │    
 │   ├── store/                    # State management
+│   │    ├── notificationStore.ts
+│   │    └── useStore.ts
+│   │    
 │   └── types/                    # TypeScript definitions
+│        ├── post.ts
+│        ├── profile.ts
+│        ├── renderUser.ts
+│        └── user.ts
+│   
+│   
 ├── components.json                # shadcn/ui config
 ├── middleware.ts                # Edge middleware
 ├── tailwind.config.js           # Tailwind configuration
