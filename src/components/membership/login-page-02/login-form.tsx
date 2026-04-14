@@ -1,9 +1,9 @@
 "use client";
 
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, type UserCredential } from "firebase/auth";
-import { EyeIcon, EyeOffIcon, MailIcon, LockIcon } from "lucide-react";
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useState, useEffect } from "react";
+import { PremiumModeToggle } from "../../../../components/ui/premium-mode-toggle";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 import { Checkbox } from "../../../../components/ui/checkbox";
@@ -12,7 +12,6 @@ import { motion } from "framer-motion";
 import { Label } from "../../../../components/ui/label";
 import { toast } from "sonner";
 import { app } from "@/lib/firebase";
-import { PremiumModeToggle } from "../../../../components/ui/premium-mode-toggle";
 import { Input } from "../../../../components/ui/input";
 import RippleButton from "@components/ui/RippleButton";
 
@@ -215,7 +214,7 @@ const LoginForm = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-12 pl-11 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 rounded-2xl text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  className="h-12 pl-11 bg-white dark:bg-gray-900/50 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 rounded-2xl text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 />
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
               </div>
@@ -234,7 +233,7 @@ const LoginForm = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="h-12 pl-11 pr-12 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 rounded-2xl text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  className="h-12 pl-11 pr-12 bg-white dark:bg-gray-900/50 border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 rounded-2xl text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 />
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
                 <button

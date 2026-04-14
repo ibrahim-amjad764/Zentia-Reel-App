@@ -1,4 +1,4 @@
-import { createServer } from "http";
+const { createServer } = require("http");
 import next from "next";
 import express from "express";
 import { WebSocketServer } from "ws";

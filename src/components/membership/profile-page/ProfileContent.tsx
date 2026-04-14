@@ -118,7 +118,7 @@ export default function ProfileContent({ user, onSave, onCancel, isSaving, onUpd
                 <Label className="text-sm font-bold uppercase tracking-wider">Passkey</Label>
                 <p className="text-muted-foreground text-xs font-medium">Last synced 5 days ago.</p>
               </div>
-              <Button size="sm" variant="outline" className="rounded-xl font-bold text-[10px] uppercase tracking-widest" onClick={() => handleAccountAction("Auth sync requested")}>
+              <Button size="sm" variant="outline" className="rounded-xl font-bold text-[10px] uppercase tracking-widest border-accent-foreground" onClick={() => handleAccountAction("Auth sync requested")}>
                 Update
               </Button>
             </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import "./globals.css";
+
 import { ReactQueryProvider } from "../src/providers/ReactQueryProvider";
 import { Toaster } from "sonner"
 import { useEffect } from "react";
@@ -34,6 +35,7 @@ export default function RootLayout({
 
   // PURPOSE: Enforce persisted theme on first mount (no system preference).
   useEffect(() => {
+    console.log("[System] Zentia Reel App - Initializing Modern UI Layer");
     console.log("[Layout] Hydrating persisted UI mode");
     hydrateTheme();
   }, [hydrateTheme]);

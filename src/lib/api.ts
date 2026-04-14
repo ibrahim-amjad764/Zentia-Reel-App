@@ -1,5 +1,3 @@
-
-
 // export default api;
 
 import axios, { AxiosInstance, AxiosError } from "axios";

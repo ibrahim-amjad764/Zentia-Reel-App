@@ -19,7 +19,7 @@ interface ProfileHeaderProps {
     avatarUrl?: string;
     jobTitle?: string;
     company?: string;
-    location?: string;
+    location?: any;
     createdAt?: string;
     postsCount?: number;
     followersCount?: number;
@@ -330,9 +330,6 @@ export default function ProfileHeader({
                 document.body
               )}
             </div>
-            {/* <Button variant="ghost" size="icon" className="bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-2xl hover:bg-white/20 transition-all hover:scale-110" asChild>
-              <Link href="/auth/logout"><LogOut size={20} /></Link>
-            </Button> */}
           </div>
         </div>
       </div>
@@ -357,9 +354,7 @@ export default function ProfileHeader({
                 </Avatar>
                 {/* Online Status */}
                 <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-green-500 border-2 border-white dark:border-zinc-950 rounded-full shadow-lg" />
-                {/* <div className="absolute -bottom-0.11 -right-0.25 h-6 w-6 bg-green-500 border-2 border-white dark:border-zinc-950 rounded-full shadow-lg" /> */}
-                {/* <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-green-500 border-2 border-white dark:border-zinc-950 rounded-full shadow-lg" /> */}
-              {/* </div> */}
+
             </div>
 
             {/* NAME & BIO SUBSECTION */}
@@ -369,17 +364,21 @@ export default function ProfileHeader({
                   <h1 className="text-3xl md:text-5xl font-black tracking-tight text-gray-900 dark:text-white">
                     {user.firstName} <span className="text-transparent bg-clip-text bg-gradient-to-br from-[#FF7E5F] to-[#FEB47B]">{user.lastName}</span>
                   </h1>
-                  {/* <Badge className="bg-[#FF7E5F]/10 text-[#FF7E5F] border-[#FF7E5F]/20 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider animate-pulse">
-                    Elite Tier
-                  </Badge> */}
+
                 </div>
                 <p className="text-sm md:text-base font-medium text-gray-500 dark:text-zinc-400 max-w-md">
-                  {user.company || "Zentia Space"}
+                  {[user.jobTitle, user.company].filter(Boolean).join(" at ") || "Zentia Member"}
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest">
-                <span className="flex items-center gap-1.5"><MapPin size={14} className="text-[#FF7E5F]" /> {user.location || "Orbiting Space"}</span>
+                <span className="flex items-center gap-1.5">
+                  <MapPin size={14} className="text-[#FF7E5F]" /> 
+                  {typeof user.location === 'object' && user.location
+                    ? ([user.location.city, user.location.country].filter(Boolean).join(", ") || 
+                       (user.location.lat && user.location.lng ? `${Number(user.location.lat).toFixed(2)}, ${Number(user.location.lng).toFixed(2)}` : "Orbiting Space"))
+                    : (user.location || "Orbiting Space")}
+                </span>
                 <span className="bg-zinc-100 dark:bg-zinc-800 w-1 h-1 rounded-full" />
                 <span className="flex items-center gap-1.5"><Calendar size={14} className="text-[#FF7E5F]" /> Joined {new Date(user.createdAt || "").toLocaleString('en-US', { month: 'long', year: 'numeric' })}</span>
               </div>
@@ -393,9 +392,6 @@ export default function ProfileHeader({
                     <Edit3 size={18} className="group-hover:rotate-12 transition-transform" />
                     Edit Profile
                   </Button>
-                  {/* <Button variant="ghost" size="icon" className="h-12 w-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800/50 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all border border-zinc-100 dark:border-zinc-700">
-                    <Settings size={20} />
-                  </Button> */}
                 </div>
               )}
             </div>

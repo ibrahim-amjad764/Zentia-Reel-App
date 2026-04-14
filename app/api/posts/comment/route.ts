@@ -1,15 +1,17 @@
 // app/api/posts/comment/route.ts
-import { NextRequest } from "next/server";
-import { initDB } from "../../../../src/db/init-db";
-import { AppDataSource } from "../../../../src/db/data-source";
-import { Post } from "../../../../src/entities/post";
-import { Comment } from "../../../../src/entities/comment";
-import { User } from "../../../../src/entities/user";
-import admin from "../../../../src/lib/firebase-admin";
-import { cookies } from "next/headers";
-import { In } from "typeorm";
 import { NotificationService } from "../../../../src/services/notification.service";
 import { NotificationType } from "../../../../src/entities/notification";
+import { commentSchema } from "../../../../src/lib/validation"; // SECURITY: Input validation
+import { AppDataSource } from "../../../../src/db/data-source";
+import { NextRequest } from "next/server";
+import { cookies } from "next/headers";
+import { Comment } from "../../../../src/entities/comment";
+import { initDB } from "../../../../src/db/init-db";
+import { Post } from "../../../../src/entities/post";
+import { User } from "../../../../src/entities/user";
+import { In } from "typeorm";
+import sanitize from 'sanitize-html'; // SECURITY: XSS protection
+import admin from "../../../../src/lib/firebase-admin";
 
 // Runs in Node.js environment
 export const runtime = "nodejs";
@@ -118,46 +120,65 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
   console.log("[POST /api/posts/comment] Request started");
-
+ 
   try {
     await initDB(); // Ensure DB is initialized
-
+ 
     if (!AppDataSource) {
       console.error("[POST /api/posts/comment] AppDataSource is null after initDB");
       return Response.json({ error: "Database not initialized" }, { status: 500 });
     }
-
+ 
     const user = await getAuthUser();
     if (!user) {
       console.log("[POST /api/posts/comment] Unauthorized - no valid auth token");
       return Response.json({ message: "Unauthorized" }, { status: 401 });
     }
-
-    const { postId, content } = await req.json();
-    if (!postId || !content?.trim()) {
-      console.log("[POST /api/posts/comment] Bad request - postId or content missing");
-      return Response.json({ message: "postId and content are required" }, { status: 400 });
-    }
-
+ 
+    const body = await req.json();
+    console.log("[POST /api/posts/comment] Raw comment data:", { 
+      postId: body.postId, 
+      contentLength: body.content?.length 
+    });
+ 
+    // SECURITY: Validate input data to prevent XSS and injection attacks
+    const validatedData = commentSchema.parse({
+      content: body.content,
+      postId: body.postId,
+      userId: user.id
+    });
+    console.log("[POST /api/posts/comment] Input validation passed");
+ 
+    // SECURITY: Sanitize comment content to remove any malicious HTML/JS
+    const sanitizedContent = sanitize(validatedData.content, {
+      allowedTags: [], // No HTML tags allowed in comments
+      allowedAttributes: {}, // No attributes allowed
+      textFilter: (text) => text.replace(/[<>]/g, '') // Remove any remaining angle brackets
+    });
+    console.log("[POST /api/posts/comment] Content sanitized successfully");
+ 
     const postRepo = AppDataSource.getRepository(Post);
     const commentRepo = AppDataSource.getRepository(Comment);
-
+ 
     const post = await postRepo.findOne({
-      where: { id: postId },
-      relations: ["user"], // 🔥 THIS FIXES EVERYTHING
+      where: { id: validatedData.postId },
+      relations: ["user"], // Load post owner for notifications
     });
+    
     if (!post) {
-      console.log(`[POST /api/posts/comment] Post not found: ${postId}`);
+      console.log(`[POST /api/posts/comment] Post not found: ${validatedData.postId}`);
       return Response.json({ message: "Post not found" }, { status: 404 });
     }
-
+ 
     const comment = new Comment();
     comment.post = post;
     comment.user = user;
-    comment.content = content.trim();
-
+    comment.content = sanitizedContent; // Use sanitized content
+ 
     const savedComment = await commentRepo.save(comment);
-
+    console.log(`[POST /api/posts/comment] Comment saved with ID: ${savedComment.id}`);
+ 
+    // Send notification to post owner (if not commenting on own post)
     if (post.user.id !== user.id) {
       console.log(`[NOTIF] Sending notification to post owner ${post.user.id}`);
       await NotificationService.createNotification({
@@ -168,21 +189,29 @@ export async function POST(req: NextRequest) {
         postId: post.id,
       });
     }
-
+ 
+    // Fetch comment with relations for response
     const commentWithUser = await commentRepo.findOne({
       where: { id: savedComment.id },
       relations: ["user", "post"],
     });
-
+ 
     const duration = Date.now() - startTime;
     console.log(`[POST /api/posts/comment] SUCCESS - Comment ID: ${savedComment.id}, Took: ${duration}ms`);
-
+ 
     return Response.json(
       { comment: commentWithUser, message: "Comment added successfully" },
       { status: 201 }
     );
-  } catch (err) {
-    console.error("[POST /api/posts/comment] ERROR:", err);
+  } catch (error) {
+    console.error("[POST /api/posts/comment] ERROR:", error);
+    
+    // SECURITY: Don't expose validation errors to client
+    if (error instanceof Error && error.name === 'ZodError') {
+      console.log("[POST /api/posts/comment] Validation error:", error.message);
+      return Response.json({ error: "Invalid comment data" }, { status: 400 });
+    }
+    
     return Response.json({ error: "Failed to add comment" }, { status: 500 });
   }
 }

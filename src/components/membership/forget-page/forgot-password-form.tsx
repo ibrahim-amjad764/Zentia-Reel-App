@@ -2,14 +2,14 @@
 
 import { getAuth, sendPasswordResetEmail } from "firebase/auth"
 import { useEffect, useState } from "react"
+import { PremiumModeToggle } from "../../../../components/ui/premium-mode-toggle";
 import { MailIcon, Check } from "lucide-react"
 import { Button } from "@components/ui/button"
 import { motion } from "framer-motion"
 import { Label } from "@components/ui/label"
 import { toast } from "sonner"
-import { app } from "@/lib/firebase"
-import { PremiumModeToggle } from "../../../../components/ui/premium-mode-toggle";
 import { Input } from "../../../../components/ui/input"
+import { app } from "@/lib/firebase"
 import RippleButton from "@components/ui/RippleButton";
 
 const ForgotPasswordForm = () => {

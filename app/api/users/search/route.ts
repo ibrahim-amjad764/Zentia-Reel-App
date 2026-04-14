@@ -1,21 +1,33 @@
 //app/api/users/search/route.ts
 
-import { NextResponse } from "next/server";
 import { AppDataSource } from "../../../../src/db/data-source";
+import { NextResponse } from "next/server";
 import { User } from "../../../../src/entities/user";
+import  sanitize  from "sanitize-html";
+
 
 export async function GET(req: Request) {
     try {
         console.log(" Search API hit");
 
         const { searchParams } = new URL(req.url);
-        const query = searchParams.get("q");
+        const rawQuery = searchParams.get("q");
 
-        console.log(" Query:", query);
+        console.log(" Raw Query:", rawQuery);
 
-        if (!query) {
+        if (!rawQuery) {
             return NextResponse.json({ users: [] });
         }
+        
+        // SECURITY: Sanitize user input to prevent XSS and injection attacks
+        // Remove all HTML tags and special characters, keep only safe text
+        const sanitizedQuery = sanitize(rawQuery.trim(), {
+            allowedTags: [], //No HTML tags allowed
+            allowedAttributes: {}, //No attribut allowed
+            textFilter: (text) => text.replace(/[<>]/g, '') //Remove angle brackets
+        });
+
+        console.log(" Sanitized Query:", sanitizedQuery);
 
         //  IMPORTANT: Ensure DB initialized
         if (!AppDataSource!.isInitialized) {
@@ -26,10 +38,9 @@ export async function GET(req: Request) {
         const repo = AppDataSource!.getRepository(User);
 
         const users = await repo
-
             .createQueryBuilder("user")
             .where("LOWER(user.email) LIKE LOWER(:query)", {
-                query: `%${query}%`,
+                query: `%${sanitizedQuery}%`,
             })
             .limit(10)
             .getMany();

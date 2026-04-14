@@ -5,16 +5,6 @@ import { FaUserPlus, FaCheck, FaSpinner } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
-/**
- * Zentia Premium FollowButton
- * 
- * Purpose: Provides a high-end, responsive follow/unfollow action with 
- * Zentia's custom gradient palette (Coral/Orange/Peach).
- * 
- * Design: Features clean gradients, smooth micro-interactions, 
- * and clear status visibility.
- */
-
 interface FollowButtonProps {
   userId: string;
   initialFollowing?: boolean;

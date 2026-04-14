@@ -1,11 +1,11 @@
+import { Upload, Link as LinkIcon, AtSign, Globe, MapPin, Briefcase, Camera, Check, ChevronRight, Twitter, Linkedin, Trophy, Plus, Calendar, Instagram, Facebook, Github,  } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Textarea } from "../../../../components/ui/textarea";
 import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
 import { toast } from "sonner";
 import { Card } from "../../../../components/ui/card";
-import { motion, AnimatePresence } from "framer-motion";
-import { Upload, Link as LinkIcon, AtSign, Globe, MapPin, Briefcase, Camera, Check, ChevronRight, Twitter, Linkedin } from "lucide-react";
 
 interface EditProfileFormProps {
   user: any;
@@ -16,13 +16,34 @@ interface EditProfileFormProps {
 }
 
 const EditProfileForm = ({ user, onSave, onCancel, isSaving, onUpdate }: EditProfileFormProps) => {
+  console.log("[EditProfileForm] Initializing with user data:", {
+    email: user.email,
+    website: user.website,
+    social: user.social
+  });
+
   const [updatedUser, setUpdatedUser] = useState<any>({
     ...user,
+    ...(user.social || {}),
+    ...(user.profile || {}),
     skillsText: (user.skills || []).join(", "),
     hobbiesText: (user.hobbies || []).join(", "),
   });
+
+  console.log("[EditProfileForm] Initial updatedUser state:", {
+    website: updatedUser.website,
+    social: updatedUser.social
+  });
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+
+  // Achievement form state
+  const [achievementTitle, setAchievementTitle] = useState("");
+  const [achievementDescription, setAchievementDescription] = useState("");
+  const [achievementDate, setAchievementDate] = useState("");
+  const [isAddingAchievement, setIsAddingAchievement] = useState(false);
+  const [showAchievementForm, setShowAchievementForm] = useState(false);
+  const [isSyncingLocation, setIsSyncingLocation] = useState(false);
 
   // Sync with preview on every state change
   useEffect(() => {
@@ -33,6 +54,153 @@ const EditProfileForm = ({ user, onSave, onCancel, isSaving, onUpdate }: EditPro
     const { name, value } = e.target;
     console.log(`[EditProfileForm] Field update: ${name} = "${value}"`);
     setUpdatedUser((prev: any) => ({ ...prev, [name]: value }));
+  };
+
+  /**
+   * Handle achievement submission
+   * Purpose: Save achievement to database via API
+   * Features: Form validation, API call, error handling, success feedback
+   * Best Practices: Modern async/await, proper error boundaries, user feedback
+   */
+  const handleAddAchievement = async () => {
+    console.log("[EditProfileForm] Adding achievement:", {
+      title: achievementTitle,
+      hasDescription: !!achievementDescription,
+      hasDate: !!achievementDate
+    });
+
+    // Validation
+    if (!achievementTitle.trim()) {
+      toast.error("Achievement title is required");
+      return;
+    }
+
+    try {
+      setIsAddingAchievement(true);
+
+      const achievementData = {
+        title: achievementTitle.trim(),
+        description: achievementDescription.trim() || undefined,
+        date: achievementDate || undefined
+      };
+
+      console.log("[EditProfileForm] Sending achievement data:", achievementData);
+
+      const response = await fetch("/api/achievements", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // Include auth cookies
+        body: JSON.stringify(achievementData),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("[EditProfileForm] Achievement API error:", errorText);
+        throw new Error(`Failed to add achievement: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("[EditProfileForm] Achievement added successfully:", result);
+
+      // CRITICAL: Update local state to reflect the new achievement immediately
+      // This ensures the preview syncs and the list is updated
+      const newAchievement = result.achievement;
+      setUpdatedUser((prev: any) => {
+        const currentAchievements = Array.isArray(prev.achievements) ? prev.achievements : [];
+        return {
+          ...prev,
+          achievements: [...currentAchievements, newAchievement]
+        };
+      });
+
+      // Reset form
+      setAchievementTitle("");
+      setAchievementDescription("");
+      setAchievementDate("");
+      setShowAchievementForm(false);
+
+      // Show success message
+      toast.success("Achievement added successfully!", {
+        description: "Your digital trophy has been saved.",
+        icon: "🏆"
+      });
+
+      console.log("[EditProfileForm] Local state synchronized with backend");
+
+    } catch (err) {
+      console.error("[EditProfileForm] Error adding achievement:", err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      toast.error(`Failed to add achievement: ${errorMessage}`);
+    } finally {
+      setIsAddingAchievement(false);
+    }
+  };
+
+  /**
+   * Sync Profile with My Location
+   * Purpose: Capture current GPS coordinates and save geocoded address to database
+   * Fallback: If geocoding fails, coordinates are still saved to the database.
+   */
+  const getCurrentLocation = async () => {
+    console.log("[Geolocation] Requesting current position...");
+    const toastId = toast.loading("Getting your location...");
+    
+    if (!navigator.geolocation) {
+      toast.error("GPS not supported on this device.", { id: toastId });
+      return;
+    }
+    setIsSyncingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        console.log(`[Geolocation] Lat: ${latitude}, Lng: ${longitude}`);
+        
+        try {
+          // Save location to database via API
+          const response = await fetch('/api/user/location', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ latitude, longitude })
+          });
+
+          if (!response.ok) throw new Error(`Failed to save location: ${response.status}`);
+
+          const result = await response.json();
+          console.log("[Geolocation] Sync Success:", result);
+          
+          if (result.success && result.data) {
+            const { city, country, latitude, longitude } = result.data;
+            
+            // Update local state with all geocoded details
+            setUpdatedUser((prev: any) => ({
+              ...prev,
+              lat: latitude,
+              lng: longitude,
+              city: city,
+              country: country,
+              // Fallback for input field: show coords if city/country missing
+              location: [city, country].filter(Boolean).join(", ") || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`
+            }));
+            
+            const displayLocation = [city, country].filter(Boolean).join(", ") || `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+            toast.success(`Location synced: ${displayLocation}`, { id: toastId });
+          }
+        } catch (err) {
+          console.error("[Geolocation] Database save failed:", err);
+          toast.error("Failed to save location.", { id: toastId });
+        } finally {
+          setIsSyncingLocation(false);
+        }
+      },
+      (error) => {
+        setIsSyncingLocation(false);
+        console.error("[Geolocation] Error:", error);
+        toast.error("Location access denied.", { id: toastId });
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
   };
 
   const handleAvatarUpload = async (file: File) => {
@@ -73,7 +241,17 @@ const EditProfileForm = ({ user, onSave, onCancel, isSaving, onUpdate }: EditPro
       hobbies: toTags(updatedUser.hobbiesText || ""),
     };
 
-    console.log("[EditProfileForm] Final payload prepared:", payload.email);
+    console.log("[EditProfileForm] Final payload prepared:", {
+      email: payload.email,
+      website: payload.website,
+      social: payload.social,
+      instagram: payload.instagram,
+      facebook: payload.facebook,
+      twitter: payload.twitter,
+      linkedin: payload.linkedin,
+      github: payload.github
+    });
+    
     await onSave(payload);
   };
 
@@ -166,15 +344,18 @@ const EditProfileForm = ({ user, onSave, onCancel, isSaving, onUpdate }: EditPro
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className={labelClasses}>Professional Title</label>
-            <Input
-              name="jobTitle"
-              value={updatedUser.jobTitle || ""}
-              onChange={handleChange}
-              placeholder="e.g. Creative Director"
-              className={inputClasses}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className={labelClasses}>Professional Title</label>
+              <Input
+                name="jobTitle"
+                value={updatedUser.jobTitle || ""}
+                onChange={handleChange}
+                placeholder="e.g. Creative Director"
+                className={inputClasses}
+              />
+            </div>
+           
           </div>
 
           <div className="md:col-span-2 space-y-2">
@@ -219,7 +400,9 @@ const EditProfileForm = ({ user, onSave, onCancel, isSaving, onUpdate }: EditPro
                 <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#FF7E5F]" />
                 <Input
                   name="location"
-                  value={updatedUser.location || ""}
+                  value={typeof updatedUser.location === 'object' && updatedUser.location 
+                    ? ([updatedUser.location.city, updatedUser.location.country].filter(Boolean).join(", ") || "")
+                    : (updatedUser.location || "")}
                   onChange={handleChange}
                   placeholder="San Francisco, CA"
                   className={inputClasses + " pl-12 pr-12 transition-all group-hover:ring-orange-200 dark:group-hover:ring-orange-900"}
@@ -229,107 +412,97 @@ const EditProfileForm = ({ user, onSave, onCancel, isSaving, onUpdate }: EditPro
                   variant="ghost" 
                   size="icon"
                   className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full hover:bg-orange-50 dark:hover:bg-orange-950/30 text-gray-400 hover:text-[#FF7E5F] transition-colors"
-                  onClick={async () => {
-                    console.log("[Geolocation] Requesting current position...");
-                    const toastId = toast.loading("Accessing satellite data...");
-                    
-                    if (!navigator.geolocation) {
-                      toast.error("GPS not supported on this device.", { id: toastId });
-                      return;
-                    }
-
-                    navigator.geolocation.getCurrentPosition(
-                      async (pos) => {
-                        const { latitude, longitude } = pos.coords;
-                        console.log(`[Geolocation] Lat: ${latitude}, Lng: ${longitude}`);
-                        
-                        try {
-                          // Using Nominatim (OSM) for demonstration as it's open-source
-                          // Specify accept-language=en for consistent naming (can be changed based on user locale)
-                          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=en`);
-                          const data = await res.json();
-                          const addr = data.address || {};
-                          console.log("[Geolocation] Comprehensive Geodata:", data);
-                          
-                          // Extreme robust "City" detection (Municipality, Postal City, and District fallbacks included)
-                          // Priority: City > Town > Municipality > Village > Suburb > District > County > State
-                          const city = addr.city || 
-                                       addr.town || 
-                                       addr.municipality || 
-                                       addr.postal_city ||
-                                       addr.village || 
-                                       addr.suburb || 
-                                       addr.city_district || 
-                                       addr.state_district ||
-                                       addr.county || 
-                                       addr.region || "";
-
-                          const country = addr.country || "";
-                          const state = addr.state || addr.province || "";
-                          
-                          // If city is still blank, try picking the first segment of display_name
-                          const cityFallback = !city && data.display_name ? data.display_name.split(',')[0].trim() : city;
-                          
-                          // Format: "City, State" if in the same country, or "City, Country"
-                          const displayRegion = cityFallback && state ? `${cityFallback}, ${state}` : (cityFallback || state || "Unknown Region");
-                          const fullLocation = [displayRegion, country].filter(Boolean).join(", ");
-                          
-                          console.log(`[Geolocation] Formatted Identity: ${fullLocation}`);
-                          setUpdatedUser((prev: any) => ({
-                            ...prev,
-                            location: fullLocation,
-                            lat: latitude,
-                            lng: longitude,
-                            city: cityFallback || state || "Unknown",
-                            country: country
-                          }));
-                          
-                          toast.success(`Identity localized: ${displayRegion}`, { id: toastId });
-                        } catch (err) {
-                          console.error("[Geolocation] Reverse geocoding failed:", err);
-                          toast.error("Failed to resolve city. Please enter manually.", { id: toastId });
-                        }
-                      },
-                      (error) => {
-                        console.error("[Geolocation] Error:", error);
-                        let msg = "Location access denied.";
-                        if (error.code === error.TIMEOUT) msg = "Location request timed out.";
-                        toast.error(msg, { id: toastId });
-                      },
-                      { timeout: 10000, enableHighAccuracy: true }
-                    );
-                  }}
+                  onClick={getCurrentLocation}
                 >
-                  <Globe className="w-4 h-4 animate-pulse-slow" />
+                  <MapPin size={18} />
                 </Button>
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter ml-2">Lat/Lng Lock</span>
-                  <div className="h-10 flex items-center px-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700 text-[10px] font-mono text-gray-500 overflow-hidden truncate">
-                    {updatedUser.lat ? `${Number(updatedUser.lat).toFixed(4)}, ${Number(updatedUser.lng).toFixed(4)}` : "Not anchored"}
+
+              {/* GPS COORDINATES & LOCATION STATUS (AUTO-UPDATE) */}
+              {(updatedUser.lat || updatedUser.lng || isSyncingLocation) ? (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  className="grid grid-cols-2 gap-4"
+                >
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter ml-2">GPS Coordinates</span>
+                    <div className={`h-10 flex items-center px-4 rounded-xl border transition-colors duration-500 ${
+                      isSyncingLocation ? 'bg-orange-50 dark:bg-orange-950/20 border-orange-200' : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                    } text-green-700 dark:text-green-400 text-[10px] font-mono overflow-hidden truncate`}>
+                      <AnimatePresence mode="wait">
+                        <motion.div 
+                          key={isSyncingLocation ? 'sync' : 'saved'}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 10 }}
+                          className="flex items-center gap-1"
+                        >
+                          <div className={`w-2 h-2 rounded-full ${isSyncingLocation ? 'bg-orange-500' : 'bg-green-500'} animate-pulse`} />
+                          <span className="font-bold">
+                            {isSyncingLocation ? "Synchronizing..." : `${Number(updatedUser.lat || 0).toFixed(6)}, ${Number(updatedUser.lng || 0).toFixed(6)}`}
+                          </span>
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter ml-2">Region</span>
-                  <div className="h-10 flex items-center px-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700 text-[10px] font-bold text-[#FF7E5F] truncate">
-                    {updatedUser.city ? `${updatedUser.city}, ${updatedUser.country}` : "Global"}
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter ml-2">Location Status</span>
+                    <div className={`h-10 flex items-center px-4 rounded-xl border transition-colors duration-500 ${
+                      isSyncingLocation ? 'bg-orange-50 dark:bg-orange-950/20 border-orange-200' : 'bg-[#FF7E5F]/10 border-[#FF7E5F]/30'
+                    } text-[#FF7E5F] text-[10px] font-bold truncate`}>
+                      <AnimatePresence mode="wait">
+                        <motion.div 
+                          key={isSyncingLocation ? 'sync' : 'saved'}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 10 }}
+                          className="flex items-center gap-1"
+                        >
+                          <MapPin size={12} className={isSyncingLocation ? "animate-bounce" : "text-[#FF7E5F]"} />
+                          <span>
+                            {isSyncingLocation ? "Checking API..." : (updatedUser.city ? `${updatedUser.city}, ${updatedUser.country}` : "Coordinates Only (Fallback)")}
+                          </span>
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
                   </div>
+                </motion.div>
+              ) : (
+                <div className="p-4 border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-2xl flex items-center justify-center">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                    <Globe size={12} className="opacity-50" />
+                    No location data synced
+                  </p>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
-          <div className="space-y-2 lg:col-span-2">
-            <label className={labelClasses}>GitHub Handle</label>
+          <div className="space-y-2 ">
+            <label className={labelClasses}>Instagram Profile</label>
             <div className="relative">
-              <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Instagram className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
-                name="github"
-                value={updatedUser.github || ""}
+                name="instagram"
+                value={updatedUser.instagram || ""}
                 onChange={handleChange}
-                placeholder="github.com/..."
+                placeholder="instagram.com/username"
+                className={inputClasses + " pl-12"}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className={labelClasses}>Facebook Profile</label>
+            <div className="relative">
+              <Facebook className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                name="facebook"
+                value={updatedUser.facebook || ""}
+                onChange={handleChange}
+                placeholder="facebook.com/username"
                 className={inputClasses + " pl-12"}
               />
             </div>
@@ -362,7 +535,133 @@ const EditProfileForm = ({ user, onSave, onCancel, isSaving, onUpdate }: EditPro
               />
             </div>
           </div>
+
         </div>
+      </motion.section>
+
+      {/* ACHIEVEMENTS SECTION */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.6 }}
+        className="space-y-6"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#FF7E5F] to-[#FEB47B] rounded-xl flex items-center justify-center text-white shadow-lg">
+              <Trophy size={20} />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-gray-900 dark:text-white">Achievements</h2>
+              <p className="text-xs text-gray-500 dark:text-zinc-500">Add your accomplishments</p>
+            </div>
+          </div>
+          
+          {!showAchievementForm && (
+            <Button
+              onClick={() => setShowAchievementForm(true)}
+              variant="outline"
+              className="border-[#FF7E5F]/30 text-[#ff6741] hover:bg-[#FF7E5F]/10 hover:border-[#FF7E5F]/50 transition-all duration-300 group"
+            >
+              <Plus size={16} className="mr-2 group-hover:rotate-90 transition-transform" />
+              Add Achievement
+            </Button>
+          )}
+        </div>
+
+        {/* Achievement Form */}
+        <AnimatePresence>
+          {showAchievementForm && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
+            >
+              <Card className="p-6  border border-[#FF7E5F]/20 rounded-3xl">
+                <div className="space-y-4">
+                  {/* Achievement Title */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-500 dark:text-zinc-500 uppercase tracking-wider">
+                      Achievement Title *
+                    </label>
+                    <Input
+                      value={achievementTitle}
+                      onChange={(e) => setAchievementTitle(e.target.value)}
+                      placeholder="e.g., Completed JavaScript Course"
+                      className="border-[#FF7E5F]/20 focus:border-[#FF7E5F]/50 bg-white/50 dark:bg-zinc-800/50"
+                    />
+                  </div>
+
+                  {/* Achievement Description */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-500 dark:text-zinc-500 uppercase tracking-wider">
+                      Description (Optional)
+                    </label>
+                    <Textarea
+                      value={achievementDescription}
+                      onChange={(e) => setAchievementDescription(e.target.value)}
+                      placeholder="Describe your achievement..."
+                      rows={3}
+                      className="border-[#FF7E5F]/20 focus:border-[#FF7E5F]/50 bg-white/50 dark:bg-zinc-800/50 resize-none"
+                    />
+                  </div>
+
+                  {/* Achievement Date */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-500 dark:text-zinc-500 uppercase tracking-wider">
+                      Date (Optional)
+                    </label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        type="date"
+                        value={achievementDate}
+                        onChange={(e) => setAchievementDate(e.target.value)}
+                        className="pl-10 border-[#FF7E5F]/20 focus:border-[#FF7E5F]/50 bg-white/50 dark:bg-zinc-800/50"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Form Actions */}
+                  <div className="flex items-center gap-3 pt-2">
+                    <Button
+                      onClick={handleAddAchievement}
+                      disabled={isAddingAchievement || !achievementTitle.trim()}
+                      className="flex-1 bg-gradient-to-br from-[#ff613a] to-[#ff8324] text-white font-bold shadow-gold-soft hover:shadow-gold-heavy transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isAddingAchievement ? (
+                        <>
+                          <div className="w-4 h-4 bg-white/30 rounded-full animate-pulse mr-2" />
+                          Adding Achievement...
+                        </>
+                      ) : (
+                        <>
+                          <Trophy size={16} className="mr-2" />
+                          Add Achievement
+                        </>
+                      )}
+                    </Button>
+                    
+                    <Button
+                      onClick={() => {
+                        setShowAchievementForm(false);
+                        setAchievementTitle("");
+                        setAchievementDescription("");
+                        setAchievementDate("");
+                      }}
+                      variant="outline"
+                      className=" hover:bg-gray-200 dark:hover:bg-zinc-800 transition-all duration-300"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.section>
 
       {/* FIXED FOOTER ACTIONS */}
@@ -378,15 +677,16 @@ const EditProfileForm = ({ user, onSave, onCancel, isSaving, onUpdate }: EditPro
               variant="ghost"
               onClick={onCancel}
               disabled={isSaving}
-              className="flex-1 md:flex-none h-12 px-8 rounded-2xl font-bold uppercase tracking-widest text-[10px] text-gray-500"
+              className="flex-1 md:flex-none h-12 px-8 rounded-2xl font-bold uppercase tracking-widest text-[10px] text-gray-500 hover:bg-gray-200 dark:hover:bg-zinc-800"
             >
               Discard
             </Button>
             <Button
               id="primary-save-btn"
+
               onClick={handleSave}
               disabled={isSaving || uploadingAvatar}
-              className="flex-[2] md:flex-none h-12 px-12 rounded-2xl bg-gradient-to-tr from-[#FF7E5F] to-[#FEB47B] text-white font-black uppercase tracking-widest text-[10px] shadow-xl hover:scale-105 active:scale-95 transition-all group"
+              className="flex-[2] md:flex-none h-12 px-12 rounded-2xl bg-gradient-to-tr from-[#ff552a] to-[#ff8d36] text-white font-black uppercase tracking-widest text-[10px] shadow-xl hover:scale-105 active:scale-95 transition-all group"
             >
               {isSaving ? (
                 <div className="flex items-center gap-2">

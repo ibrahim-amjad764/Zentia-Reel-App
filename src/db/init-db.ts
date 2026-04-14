@@ -18,18 +18,18 @@ export async function initDB() {
       console.log("[init-db] Notifications table is ready");
 
       console.log("[init-db] Checking/creating indexes...");
-      await AppDataSource.query(`
-        DO $$ 
-        BEGIN
-          IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_comments_user' AND tablename = 'comments') THEN
-            CREATE INDEX idx_comments_user ON comments ("postId", "userId");
-          END IF;
+        await AppDataSource.query(`
+          DO $$ 
+          BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_comments_user' AND tablename = 'comments') THEN
+              CREATE INDEX idx_comments_user ON comments ("postId", "userId");
+            END IF;
 
-          IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_likes_user' AND tablename = 'likes') THEN
-            CREATE INDEX idx_likes_user ON likes ("postId", "userId");
-          END IF;
-        END $$;
-      `);
+            IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_likes_user' AND tablename = 'likes') THEN
+              CREATE INDEX idx_likes_user ON likes ("postId", "userId");
+            END IF;
+          END $$;
+        `);
       console.log("[init-db] Indexes checked/created successfully");
     } else {
       console.log("[init-db] Database already initialized, skipping");

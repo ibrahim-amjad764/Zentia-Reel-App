@@ -1,6 +1,5 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   reactStrictMode: true,
   images: {
     remotePatterns: [
@@ -69,16 +68,11 @@ const nextConfig: NextConfig = {
       }
     ];
   },
-  
-  // Use Turbopack for development and production
-  turbopack: {
-    // Add any Turbopack configuration here if needed
-  },
   devIndicators: {
     buildActivity: true,
     buildActivityPosition: 'bottom-left',
   },
-  webpack: (config: any) => {
+  webpack: (config) => {
     config.plugins.push(
       new (require('webpack')).IgnorePlugin({
         resourceRegExp: /^(pg-native|mysql|mysql2|sqlite3|better-sqlite3|ioredis|typeorm-aurora-data-api-driver|pg-query-stream|oracledb|react-native-sqlite-storage|@sap\/hana-client|hdb-pool|mssql|mongodb|redis|sql.js|sqlite3|typeorm-model-generator)$/,
@@ -96,4 +90,4 @@ const nextConfig: NextConfig = {
   },
 };
  
-export default nextConfig;
+module.exports = nextConfig;

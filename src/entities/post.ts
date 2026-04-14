@@ -8,7 +8,6 @@ import { Notification } from "./notification";
 @Entity("posts")
 export class Post {
 
-  // @OneToMany(() => Notification, (notification) => notification.post)
   notifications: Notification[] = []; 
 
   @PrimaryGeneratedColumn("uuid")

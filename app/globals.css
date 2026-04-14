@@ -1,50 +1,53 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@plugin "tailwindcss-animate";
-
+/* Custom dark variant */
 @custom-variant dark (&:is(.dark *));
 
+/* =========================
+   ROOT (LIGHT MODE)
+========================= */
 :root {
-  --background: #fcfcfc;                     /* Clean, slightly warm off-white for luxury feel */
+  --background: #fcfcfc;
   --foreground: #0a0a0a;
   --muted: #f5f5f5;
-  --card: #ffffff;                           
-  --card-foreground: #0a0a0a;
-  --border: rgba(191, 149, 63, 0.15);         /* Subtle gold-tinted light border */
-  --radius: 0.75rem;
+  --card: #ffffff;
   --card-foreground: oklch(0.18 0.03 250);
+  --border: rgba(191, 149, 63, 0.15);
+  --radius: 0.75rem;
+
   --popover: oklch(0.96 0.02 255);
   --popover-foreground: oklch(0.18 0.03 250);
+
   --text-main: #111111;
   --text-placeholder: rgba(0, 0, 0, 0.4);
 
-  /* Primary & Secondary Colors (icy, reel energy) */
-:root {
-  /* 🔶 Primary (main orange) */
-  --primary: oklch(0.65 0.20 40);            /* vibrant orange */
-  --primary-foreground: oklch(0.98 0 0);     /* white text */
+  /* 🔶 Primary */
+  --primary: oklch(0.65 0.20 40);
+  --primary-foreground: oklch(0.98 0 0);
 
-  /* 🟠 Secondary (soft warm tone instead of blue) */
-  --secondary: oklch(0.75 0.12 55);          /* soft amber */
-  --secondary-foreground: oklch(0.20 0.02 40); /* dark text */
-}
+  /* 🟠 Secondary */
+  --secondary: oklch(0.75 0.12 55);
+  --secondary-foreground: oklch(0.20 0.02 40);
 
-  /* Accent / highlights */
-  --muted-foreground: oklch(0.45 0.03 265);    /* subtle cold gray */
-  --accent: oklch(0.60 0.15 190);              /* muted teal/icy vibe */
+  /* Accent */
+  --muted-foreground: oklch(0.45 0.03 265);
+  --accent: oklch(0.60 0.15 190);
   --accent-foreground: oklch(0.98 0 0);
-  --destructive: oklch(0.55 0.24 25);          /* cold red alert */
 
-  /* Inputs & effects */
+  --destructive: oklch(0.55 0.24 25);
+
+  /* Inputs */
   --input: oklch(0.18 0.03 250 / 12%);
   --ring: oklch(0.65 0.20 40 / 65%);
-  
-  /* Charts – icy, techy, modern gradient feel */
-  --chart-1: oklch(0.65 0.22 40);              /* vibrant orange */
-  --chart-2: oklch(0.60 0.12 55);              /* soft amber */
-  --chart-3: oklch(0.40 0.08 227);             /* muted violet */
-  --chart-4: oklch(0.82 0.18 85);              /* icy lime highlight */
-  --chart-5: oklch(0.78 0.18 70);              /* neon-ish mint */
+
+  /* Charts */
+  --chart-1: oklch(0.65 0.22 40);
+  --chart-2: oklch(0.60 0.12 55);
+  --chart-3: oklch(0.40 0.08 227);
+  --chart-4: oklch(0.82 0.18 85);
+  --chart-5: oklch(0.78 0.18 70);
 
   /* Sidebar */
   --sidebar: oklch(0.95 0.02 255);
@@ -56,35 +59,44 @@
   --sidebar-border: oklch(0.18 0.03 250 / 12%);
   --sidebar-ring: oklch(0.65 0.20 40 / 65%);
 
-  /* FX / glow effects – next-level reel vibe */
+  /* FX */
   --fx-grid: oklch(0.18 0.03 250 / 6%);
   --fx-glow-orange: oklch(0.65 0.20 40 / 20%);
   --fx-glow-violet: oklch(0.60 0.12 265 / 15%);
   --fx-glow-lime: oklch(0.80 0.12 165 / 12%);
-  --fx-glow-pink: oklch(0.75 0.18 320 / 14%); /* optional neon pink for reels highlights */
+  --fx-glow-pink: oklch(0.75 0.18 320 / 14%);
 }
 
-
-
+/* =========================
+   DARK MODE
+========================= */
 .dark {
-  --background: #050505;           /* Obsidian black */
-  --foreground: #f8f9fa;           
-  --card: #0a0a0a;                
+  --background: #050505;
+  --foreground: #f8f9fa;
+
+  --card: #0a0a0a;
   --card-foreground: #f8f9fa;
+
   --popover: #0a0a0a;
   --popover-foreground: #f8f9fa;
-  --primary: #d4af37;             /* Bright gold (24k feel) */
+
+  --primary: #d4af37;
   --primary-foreground: #000000;
+
   --secondary: #121212;
   --secondary-foreground: #f8f9fa;
+
   --muted: #121212;
   --muted-foreground: #a0a0a0;
+
   --accent: #1a1a1a;
   --accent-foreground: #f8f9fa;
-  --border: rgba(212, 175, 55, 0.15); /* Subtle gold border in dark mode */
+
+  --border: rgba(212, 175, 55, 0.15);
   --input: #121212;
   --ring: #d4af37;
-  --sidebar: oklch(0.155 0.02 265);            /* Sidebar bg same, slightly richer */
+
+  --sidebar: oklch(0.155 0.02 265);
   --sidebar-foreground: oklch(0.98 0 0);
   --sidebar-primary: oklch(0.78 0.14 200);
   --sidebar-primary-foreground: oklch(0.145 0 0);
@@ -92,14 +104,19 @@
   --sidebar-accent-foreground: oklch(0.98 0 0);
   --sidebar-border: oklch(1 0 0 / 12%);
   --sidebar-ring: oklch(0.78 0.14 200 / 75%);
-  --fx-grid: oklch(1 0 0 / 8%);                /* Slightly more visible grid for neon effects */
+
+  --fx-grid: oklch(1 0 0 / 8%);
   --fx-glow-orange: oklch(0.78 0.14 40 / 25%);
   --fx-glow-violet: oklch(0.72 0.18 305 / 25%);
   --fx-glow-lime: oklch(0.84 0.18 145 / 18%);
-   --text-main: #ffffff;
+
+  --text-main: #ffffff;
   --text-placeholder: rgba(255, 255, 255, 0.4);
 }
 
+/* Commented out incompatible Tailwind v4 @theme block for v3 compatibility. 
+   Tokens have been moved to tailwind.config.js to preserve the design system. */
+/* 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -142,6 +159,7 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 }
+*/
 .dark .edge-fade-top::before {
   background: linear-gradient(
     to bottom,
@@ -195,13 +213,12 @@ body {
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
   }
 }
-
 .dark body {
   background:
     radial-gradient(1200px 600px at 10% 10%, var(--fx-glow-violet), transparent 55%),
@@ -232,15 +249,15 @@ body {
   }
 
   .surface-glass {
-    @apply border-border bg-card/95 backdrop-blur-xl shadow-[0_20px_60px_-30px_rgba(0,0,0,0.8)];
+    @apply border-border bg-card backdrop-blur-xl shadow-[0_20px_60px_-30px_rgba(0,0,0,0.8)];
   }
 
   .surface-glass-hover {
-    @apply transition-[transform,box-shadow,background-color,border-color] duration-200 ease-out hover:-translate-y-0.5 hover:bg-card/97 hover:border-border/15 hover:shadow-[0_30px_90px_-45px_rgba(0,0,0,0.85)] active:translate-y-0 active:scale-[0.99];
+    @apply transition-[transform,box-shadow,background-color,border-color] duration-200 ease-out hover:-translate-y-0.5 hover:bg-card hover:border-border hover:shadow-[0_30px_90px_-45px_rgba(0,0,0,0.85)] active:translate-y-0 active:scale-[0.99];
   }
 
   .ring-neon {
-    @apply focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-0;
+    @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0;
   }
 
   .text-gradient {
@@ -440,6 +457,7 @@ body {
   grid-auto-rows: minmax(200px, auto);
   grid-auto-flow: dense;
 }
+
 
 .bento-item-large {
   grid-column: span 2;

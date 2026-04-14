@@ -1,13 +1,10 @@
-
-
-
 // app/profile/page.tsx
 "use client";
-
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { fetchUserProfile, fetchMyPosts } from "../../app/api/profile-user/user";
 import { useState, useEffect } from "react";
 import { getAuth, getIdToken } from "firebase/auth";
+import { PremiumModeToggle } from "../../components/ui/premium-mode-toggle";
 import { NotificationBell } from "../../src/components/notifications/NotificationBell";
 import { SidebarProvider } from "../../components/ui/sidebar";
 import { CreatePostModal } from "../../src/components/posts/CreatePostModal";
@@ -31,8 +28,8 @@ import SearchBar from "../../src/components/notifications/SearchBar";
 import Loader from "../../components/ui/Loader";
 import Image from "next/image";
 import Link from "next/link";
-import { PremiumModeToggle } from "../../components/ui/premium-mode-toggle";
 import PremiumNavbar from "../../components/layout/PremiumNavbar";
+
 
 interface User {
   id: string;
@@ -40,15 +37,6 @@ interface User {
   lastName?: string | null;
   email: string;
 }
-// interface Post {
-//   id: string;
-//   content: string;
-//   images?: string[];
-//   createdAt: string;
-//   user: User;
-//   likesCount?: number;
-//   time?: string;
-// }
 
 interface FetchPostsResponse {
   posts: Post[];
@@ -180,6 +168,39 @@ const ProfilePage = () => {
   const router = useRouter();
   const debouncedQuery = useDebounce(query, 400);
 
+  const loadProfile = async () => {
+    if (loading) return;
+    setLoading(true);
+    console.log(`[ProfilePage] Loading profile and posts (page ${page})...`);
+
+    try {
+      const userProfile = await fetchUserProfile();
+      const { posts: rawPosts, hasMore: more } = await fetchMyPosts(page);
+
+      setUser({
+        ...userProfile,
+        email: userProfile.email || "unknown@example.com",
+      });
+
+      const postIds: string[] = rawPosts.map((p: Post) => p.id);
+      const [likesData, commentsData] = await Promise.all([
+        fetchLikesForPosts(postIds),
+        fetchCommentsForPosts(postIds)
+      ]);
+
+      const postsWithEngagement: Post[] = mergeLikesCommentsIntoPosts(rawPosts, likesData, commentsData);
+
+      setPosts(prev => (page === 1 ? postsWithEngagement : [...prev, ...postsWithEngagement]));
+      setHasMore(more);
+      console.log("[ProfilePage] Data loaded successfully.");
+    } catch (error) {
+      console.error("[ProfilePage] Error fetching profile/posts:", error);
+      toast.error("Failed to load your elite profile.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     console.log("[ProfilePage] Component mounted. Initializing luxury experience.");
     document.title = "Elite Profile | Zentia Universe";
@@ -200,40 +221,28 @@ const ProfilePage = () => {
   }, [debouncedQuery]);
 
   useEffect(() => {
-    const loadProfile = async () => {
-      if (loading) return;
-      setLoading(true);
-      console.log(`[ProfilePage] Loading profile and posts (page ${page})...`);
+    loadProfile();
+  }, [page]); // Remove 'loading' dependency to prevent continuous rendering
 
-      try {
-        const userProfile = await fetchUserProfile();
-        const { posts: rawPosts, hasMore: more } = await fetchMyPosts(page);
-
-        setUser({
-          ...userProfile,
-          email: userProfile.email || "unknown@example.com",
-        });
-
-        const postIds: string[] = rawPosts.map((p: Post) => p.id);
-        const [likesData, commentsData] = await Promise.all([
-          fetchLikesForPosts(postIds),
-          fetchCommentsForPosts(postIds)
-        ]);
-
-        const postsWithEngagement: Post[] = mergeLikesCommentsIntoPosts(rawPosts, likesData, commentsData);
-
-        setPosts(prev => (page === 1 ? postsWithEngagement : [...prev, ...postsWithEngagement]));
-        setHasMore(more);
-        console.log("[ProfilePage] Data loaded successfully.");
-      } catch (error) {
-        console.error("[ProfilePage] Error fetching profile/posts:", error);
-        toast.error("Failed to load your elite profile.");
-      } finally {
-        setLoading(false);
+  useEffect(() => {
+    const checkForProfileUpdate = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromEdit = urlParams.get('from') === 'edit';
+      const profileUpdated = urlParams.get('updated') === 'true';
+      
+      if (fromEdit && profileUpdated) {
+        console.log("[ProfilePage] Detected profile update, refreshing data...");
+        
+        // Clear URL params
+        window.history.replaceState({}, '', window.location.pathname);
+        
+        // Refresh profile data
+        loadProfile();
       }
     };
-    loadProfile();
-  }, [page]);
+
+    checkForProfileUpdate();
+  }, []);
 
   const handleSearch = async () => {
     setSearchLoading(true);

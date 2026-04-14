@@ -1,50 +1,31 @@
 "use client";
-
-/**
- * Zentia Premium Feed Page Component
- * 
- * Purpose: Provides a high-end, visually stunning social feed with 
- * enhanced interactions, premium aesthetics, and robust performance.
- * 
- * Features:
- * - Premium Class Design: Soft gradients, tinted surfaces, and glassmorphism.
- * - Zentia Color System: Warm beige, soft peach, vibrant coral accents.
- * - Immersive Media: Larger previews, soft rounded corners, and zoom-on-hover.
- * - Robust state management for infinite scroll and real-time interactions.
- */
-
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { Card, CardContent, CardFooter, CardHeader } from "../../components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
+import { Avatar, AvatarFallback } from "../../components/ui/avatar";
+import { SidebarProvider } from "../../components/ui/sidebar";
+import { SkeletonLoader } from "../../components/ui/SkeletonLoader";
+import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "../../components/ui/button";
 import { toast } from "sonner";
 import InfiniteScroll from "react-infinite-scroll-component";
 import Image from "next/image";
 import Link from "next/link";
-import { createPortal } from "react-dom";
 
-// UI Components from local library
-import { Card, CardContent, CardFooter, CardHeader } from "../../components/ui/card";
-import { Avatar, AvatarFallback } from "../../components/ui/avatar";
-import { SidebarProvider } from "../../components/ui/sidebar";
-import { SkeletonLoader } from "../../components/ui/SkeletonLoader";
-import { Button } from "../../components/ui/button";
-
-// Icons
 import {
-  MessageCircle, Heart, Share2, Plus, Sparkles, TrendingUp, Users, Zap,
-  Loader2, ChevronLeft, ChevronRight, Bookmark, MoreHorizontal,
-  Play, Smile, Link as LinkIcon, Download, ChevronLeft as BackIcon, Mail
+  MessageCircle, Share2, Plus, Sparkles, Zap, Loader2, 
+  ChevronLeft, ChevronRight, Bookmark, Smile, Link as 
+  LinkIcon, Download, ChevronLeft as BackIcon, Mail
 } from "lucide-react";
-
-// Domain Components & Services
+import { CreatePostModal } from "../../src/components/posts/CreatePostModal";
 import { FollowButton } from "../../src/components/membership/profile-page/FollowButton";
-import { searchUsers } from "../../src/services/user.service";
 import { useDebounce } from "../../src/lib/useDebounce";
+import { searchUsers } from "../../src/services/user.service";
 import { LikeButton } from "../../src/components/posts/likes/LikeButton";
 import { authFetch } from "../../src/services/auth.service";
-import CommentSection from "../../src/components/posts/comments/CommentSection";
 import PremiumNavbar from "../../components/layout/PremiumNavbar";
-import { CreatePostModal } from "../../src/components/posts/CreatePostModal";
+import CommentSection from "../../src/components/posts/comments/CommentSection";
 
 // --- Interfaces ---
 
@@ -86,10 +67,6 @@ interface SearchUser {
 
 // --- API Service Functions ---
 
-/** 
- * Fetch posts from the server with pagination support 
- * Includes detailed tracing for debugging and performance monitoring.
- */
 const fetchPosts = async (page: number): Promise<FetchPostsResponse> => {
   try {
     console.log(`[API] Zentia Feed Fetch initiated: Page ${page}`);
@@ -111,12 +88,6 @@ const fetchPosts = async (page: number): Promise<FetchPostsResponse> => {
   }
 };
 
-// --- Sub-components ---
-
-/**  
- * FeedPost Component: A premium card representing a unique moment in the Zentiaverse.
- * Redesigned with layered colors, gradients, and immersive micro-interactions.
- */
 const FeedPost = React.memo(({
   post,
   activeIndex,
@@ -152,11 +123,6 @@ const FeedPost = React.memo(({
     [post.user.firstName, post.user.lastName]
   );
 
-  /**
-   * ZEN DIRECTIONAL LOGIC (Optimized)
-   * Tracks the gallery's motion vector synchronously.
-   * Derived state from prop ensures zero-frame lag in animation direction.
-   */
   const [[page, direction], setPage] = useState([activeIndex, 0]);
 
   if (activeIndex !== page) {
@@ -189,18 +155,17 @@ const FeedPost = React.memo(({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-120px" }}
       transition={{ duration: 1, ease: [0.19, 1, 0.22, 1] }}
-      className="group/card relative mb-14"
+      className="group/card relative mb-14 "
     >
       <Card
-        className="relative overflow-hidden rounded-[2.5rem] bg-white/80 dark:bg-zinc-900/70 backdrop-blur-xl border border-white/60 dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.06)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
-        {/* Subtle Gradient Glow Overlay */}
+        className="relative overflow-hidden rounded-[2.5rem] bg-white/80 dark:bg-zinc-900/70 backdrop-blur-xs border border-white/60 dark:border-white/10  ">
         {/* <div className="absolute inset-0 bg-gradient-to-tr from-[#FF7E5F]/5 via-transparent to-[#FEB47B]/5 opacity-0 group-hover/card:opacity-100 transition-opacity duration-1000 pointer-events-none" /> */}
         <div className="absolute inset-0 rounded-[2.5rem] border border-white/30 opacity-40 pointer-events-none" />
 
         {/* className="mb-6 relative overflow-hidden rounded-3xl bg-card border border-border shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_4px_6px_-2px_rgba(0,0,0,0.05)] transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-0.5"> */}
         {/* Post Header */}
         <CardHeader className="flex flex-row items-center justify-between gap-4 p-6 pb-4 relative z-10">
-          <div className="flex items-center gap-4">
+           <div className="flex items-center gap-4">
             <Link
               href={`/profile/${post.user.id}`}
               className="relative group/avatar"
@@ -232,9 +197,6 @@ const FeedPost = React.memo(({
 
           <div className="flex items-center gap-3">
             <FollowButton userId={post.user.id} />
-            {/* <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 transition-all">
-              <MoreHorizontal size={20} />
-            </Button> */}
           </div>
         </CardHeader>
 
@@ -348,7 +310,6 @@ const FeedPost = React.memo(({
                         key={idx}
                         onClick={(e) => {
                           e.stopPropagation();
-                          // Custom jump logic could go here if needed
                         }}
                         className={`h-1.5 rounded-full transition-all duration-1000 ease-[0.19, 1, 0.22, 1] ${
                           idx === activeIndex 
@@ -379,8 +340,6 @@ const FeedPost = React.memo(({
                 initialLikesCount={post.likesCount || 0}
                 userId={userId}
               />
-
-              {/* Comment Button (Design Preserved per request) */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -793,7 +752,7 @@ export default function FeedPage() {
           </div>
         }
       >
-        <div className="space-y-0">
+        <div className="space-y-12">
           {allPosts.map((post, idx) => (
             <FeedPost
               key={`${post.id}-${idx}`}
@@ -848,33 +807,7 @@ export default function FeedPage() {
           }}
         />
 
-        <main className="mx-auto w-full max-w-[720px] flex-1 px-4 py-20 relative z-10">
-
-          {/* Premium Zentia Stat Dashboard
-          <motion.div
-            className="flex flex-nowrap md:flex-row justify-center items-center gap-3 md:gap-6 mb-12 md:mb-20 overflow-x-auto pb-4 no-scrollbar px-3 md:px-4"
-            initial={{ opacity: 0, y: -30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 1.2, ease: [0.19, 1, 0.22, 1] }}
-          >
-            {[
-              { icon: Users, label: "5.4K", sub: "Explorers", color: "text-[#FF4D4D]", bg: "bg-[#FF4D4D]/10", border: "border-[#FF4D4D]/10" },
-              { icon: TrendingUp, label: "2.1K", sub: "Hot Signals", color: "text-[#00897B]", bg: "bg-[#00897B]/10", border: "border-[#00897B]/10" },
-              { icon: Zap, label: "128K", sub: "Sparks", color: "text-[#FFD700]", bg: "bg-[#FFD700]/10", border: "border-[#FFD700]/10" }
-            ].map((stat, i) => (
-              <motion.div
-                key={i}
-                whileHover={{ y: -8, scale: 1.05 }}
-                className={`group relative bg-white/50 dark:bg-zinc-900/40 backdrop-blur-3xl border ${stat.border} rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-7 text-center cursor-default transition-all duration-700 min-w-[110px] xs:min-w-[130px] sm:min-w-[200px] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_35px_60px_-20px_rgba(0,0,0,0.1)]`}
-              >
-                <div className={`w-9 h-9 xs:w-11 xs:h-11 md:w-9 md:h-9 mx-auto mb-2 xs:mb-3 md:mb-4 rounded-lg xs:rounded-xl md:rounded-xl ${stat.bg} flex items-center justify-center ${stat.color} shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6`}>
-                  <stat.icon size={18} className="xs:size-18 md:size-18" />
-                </div>
-                <div className="text-lg xs:text-xl md:text-2xl font-black text-[#424242] dark:text-white tracking-tighter">{stat.label}</div>
-                <div className="text-[8px] xs:text-[9px] md:text-[10px] uppercase font-black text-[#9E9E9E] tracking-[0.2em] xs:tracking-[0.3em] md:tracking-[0.3em] mt-1 xs:mt-2">{stat.sub}</div>
-              </motion.div>
-            ))}
-          </motion.div> */}
+        <main className="mx-auto w-full max-w-[720px] flex-1 px-4 py-20 relative z-10  ">
 
           <div className="relative min-h-[700px] space-y-12">
             <AnimatePresence mode="wait">

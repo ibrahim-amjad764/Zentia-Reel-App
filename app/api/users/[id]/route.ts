@@ -1,8 +1,8 @@
 
 //src/app/api/users/id/route
 import { AppDataSource } from "../../../../src/db/data-source";
-import { User } from "../../../../src/entities/user";
 import { initDB } from "../../../../src/db/init-db";
+import { User } from "../../../../src/entities/user";
 
 // GET user by id
 export async function GET(

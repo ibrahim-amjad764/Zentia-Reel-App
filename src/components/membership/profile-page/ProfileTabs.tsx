@@ -1,11 +1,11 @@
 
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import PostItem from "../../posts/PostItem";
 import { motion, AnimatePresence } from "framer-motion";
 import { LikeButton } from "../../../../src/components/posts/likes/LikeButton";
+import { useState } from "react";
+import PostItem from "../../posts/PostItem";
+import Link from "next/link";
 
 
 // --------------------------
@@ -72,8 +72,6 @@ export default function ProfileTabs({
     label: string;
   }[] = [
       { key: "posts", label: ` (${followersCount}) Posts` },
-      // { key: "comments", label: `(${commentsCount}) Comments` },
-      // { key: "likes", label: `(${likesCount}) Likes` },
       { key: "followers", label: `(${followersCount}) Followers ` },
       { key: "following", label: `(${followingCount}) Following ` },
     ];
@@ -118,17 +116,6 @@ export default function ProfileTabs({
                 posts.map((p) => {
                   console.log("Rendering post:", p.id, "Likes:", p.likesCount);
 
-                  // // Local state for like toggle per post
-                  // const [isLiked, setIsLiked] = useState(false);
-                  // const [likesCount, setLikesCount] = useState(p.likesCount);
-
-                  // // Handler for toggling like
-                  // const handleLike = () => {
-                  //   console.log(`Toggling like for post ${p.id}, currently liked: ${isLiked}`);
-                  //   setIsLiked(!isLiked);
-                  //   setLikesCount((prev) => prev + (isLiked ? -1 : 1));
-                  // };
-
                   return (
                     <div key={p.id} className="border rounded-lg p-4 space-y-2 hover:shadow-sm transition-shadow">
                       <PostItem post={p} /> {/* existing post content */}
@@ -141,19 +128,6 @@ export default function ProfileTabs({
                           initialIsLiked={false} // later dynamic karenge
                           initialLikesCount={p.likesCount} />
                       </div>
-                      
-                      {/* <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleLike}
-                            className={`${isLiked
-                                ? "text-red-500"
-                                : "text-gray-800 hover:text-red-500"
-                              } dark:text-white dark:hover:text-red-500 flex items-center transition-colors duration-200 ease-in-out hover:scale-105 active:scale-95`} >
-                            <Heart
-                              className={`h-4 w-4 mr-1 ${isLiked ? "fill-current" : ""}`}  />
-                            {likesCount} {likesCount === 1 ? "Like" : "Likes"}
-                          </Button> */}
                     </div>
                   );
                 })

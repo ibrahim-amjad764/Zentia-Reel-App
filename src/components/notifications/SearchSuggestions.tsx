@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import { User, Search, Clock, ChevronRight, X, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Search, Clock, ChevronRight, X, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 interface UserType {
   id: string | number;
@@ -22,15 +22,16 @@ interface SearchSuggestionsProps {
   isFloating?: boolean;
 }
 
-/**
- * Zentia Premium Search Highlights System
- * 
- * Provides a sophisticated dropdown for user discovery and recent activity.
- */
-const highlightText = (text: string, query: string) => {
+const escapeRegExp = (str: string) =>
+  str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const highlightText = (text?: string, query?: string) => {
+  if (!text) return "";
   if (!query) return text;
 
-  const parts = text.split(new RegExp(`(${query})`, "gi"));
+  const safeQuery = escapeRegExp(query);
+  const parts = text.split(new RegExp(`(${safeQuery})`, "gi"));
+
   return parts.map((part, index) =>
     part.toLowerCase() === query.toLowerCase() ? (
       <span key={index} className="text-[#FF7E5F] font-black underline decoration-2 underline-offset-4">

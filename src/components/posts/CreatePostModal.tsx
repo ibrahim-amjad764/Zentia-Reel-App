@@ -1,16 +1,16 @@
 "use client";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
+import { ImageIcon, X, Send, Sparkles, Plus } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
+import { Progress } from "../../../components/ui/progress";
 import { Textarea } from "../../../components/ui/textarea";
 import { Button } from "../../../components/ui/button";
 import { toast } from "sonner";
 import Image from "next/image";
 import axios from "axios";
-import { Progress } from "../../../components/ui/progress";
-import { motion, AnimatePresence } from "framer-motion";
-import { ImageIcon, X, Send, Sparkles, Plus } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -161,17 +161,13 @@ export function CreatePostModal({ open, onClose, onSuccess }: Props) {
             <DialogTitle>
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2 px-18">
-                    {/* <Sparkles className="w-5 h-5 text-primary animate-pulse" /> */}
+                  <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2 px-18 text-center">
                     Create New Post
                   </h2>
                   <p className="text-xs text-muted-foreground font-medium px-10">
                     Share your story with the world in style.
                   </p>
                 </div>
-                {/* <div className="h-10 w-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-lg transform rotate-3">
-                  <Send className="w-5 h-5 text-primary" />
-                </div> */}
               </div>
             </DialogTitle>
           </DialogHeader>

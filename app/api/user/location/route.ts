@@ -1,84 +1,170 @@
 // app/api/user/location/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import { AppDataSource } from "../../../../src/db/data-source";
-import { User } from "../../../../src/entities/user";
-import { getCurrentUser } from "../../../../src/lib/auth";
-import { initDB } from "../../../../src/db/init-db";
+import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentUser } from '../../../../src/lib/auth';
+import { AppDataSource } from '../../../../src/db/data-source';
+import { initDB } from '../../../../src/db/init-db';
+import { User } from '../../../../src/entities/user';
 
-/**
- * Handle POST requests to update user geolocation
- * @param req NextRequest
- * @returns NextResponse
- */
-export async function POST(req: NextRequest) {
+
+// GET /api/user/location - Get current user location
+export async function GET(req: NextRequest) {
+  console.log("[User Location API] GET request received");
+  
   try {
-    console.log("[Location API] Received request to update location");
-    
-    // 1. Authenticate user
-    const user = await getCurrentUser(req);
-    if (!user) {
-      console.warn("[Location API] Unauthorized access attempt");
-      return NextResponse.json({ error: "Access denied. Please sign in." }, { status: 401 });
-    }
-
-    // 2. Parse and validate payload
-    const body = await req.json();
-    const { lat, lng, city, country } = body;
-
-    console.log(`[Location API] Payload: lat=${lat}, lng=${lng}, city=${city}, country=${country}`);
-
-    // Production-ready validation
-    if (lat === undefined || lng === undefined) {
-      return NextResponse.json({ error: "GPS coordinates (lat/lng) are required." }, { status: 400 });
-    }
-
-    if (typeof lat !== 'number' || lat < -90 || lat > 90) {
-      return NextResponse.json({ error: "Invalid latitude range (-90 to 90)." }, { status: 400 });
-    }
-
-    if (typeof lng !== 'number' || lng < -180 || lng > 180) {
-      return NextResponse.json({ error: "Invalid longitude range (-180 to 180)." }, { status: 400 });
-    }
-
-    if (!city || typeof city !== 'string') {
-      return NextResponse.json({ error: "Valid city name is required." }, { status: 400 });
-    }
-
-    if (!country || typeof country !== 'string') {
-      return NextResponse.json({ error: "Valid country name is required." }, { status: 400 });
-    }
-
-    // 3. Initialize Database
     await initDB();
-    if (!AppDataSource?.isInitialized) {
-      await AppDataSource!.initialize();
+
+    // Defensive null check
+    if (!AppDataSource) {
+      console.error("[User Location API] AppDataSource is null after initDB");
+      return NextResponse.json({ error: "Database not initialized" }, { status: 500 });
     }
 
-    // 4. Update user profile
-    const userRepo = AppDataSource!.getRepository(User);
+    const userRepo = AppDataSource.getRepository(User);
+
+    // Get authenticated user
+    const user = await getCurrentUser(req);
     
-    // We update the existing fields and the new geolocation fields
-    await userRepo.update(user.id, {
-      lat: lat,
-      lng: lng,
-      city: city,
-      country: country,
-      location: `${city}, ${country}` // Sync the old descriptive field
+    console.log("[User Location API] Fetching location for user:", user?.email);
+    
+    // Validate user
+    if (!user) {
+      console.log("[User Location API] No user found");
+      return NextResponse.json({
+        success: false,
+        error: {
+          code: 401,
+          message: 'User authentication required'
+        }
+      }, { status: 401 });
+    }
+
+    console.log("[User Location API] User location data:", {
+      latitude: user.lat,
+      longitude: user.lng,
+      city: user.location?.city,
+      country: user.location?.country
     });
 
-    console.log(`[Location API] Successfully updated user ${user.id} to ${city}, ${country}`);
+    return NextResponse.json({
+      success: true,
+      location: {
+        latitude: user.lat,
+        longitude: user.lng,
+        city: user.location?.city,
+        country: user.location?.country,
+      }
+    });
 
+  } catch (err) {
+    console.error("[User Location API] GET Error:", err);
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    
     return NextResponse.json({ 
-      success: true, 
-      message: "Satellite lock confirmed. Profile location updated.",
-      data: { lat, lng, city, country }
-    }, { status: 200 });
+      error: "Failed to fetch user location", 
+      details: errorMessage 
+    }, { status: 500 });
+  }
+}
 
-  } catch (error: any) {
-    console.error("[Location API] Critical Error:", error);
+// POST /api/user/location - Save user location with geocoding
+export async function POST(req: NextRequest) {
+  console.log("[User Location API] POST request received - Processing Geolocation Update");
+  
+  try {
+    await initDB();
+
+    if (!AppDataSource) {
+      console.error("[User Location API] Database source unavailable");
+      return NextResponse.json({ error: "Database connection failed" }, { status: 500 });
+    }
+
+    // 1. Input: Accept latitude and longitude from the user
+    const body = await req.json();
+    const { latitude, longitude } = body;
+    
+    console.log("[User Location API] Received Coordinates:", { latitude, longitude });
+
+    if (!latitude || !longitude) {
+      console.log("[User Location API] Error: Missing coordinates");
+      return NextResponse.json({ 
+        success: false, 
+        message: 'Latitude and longitude are required' 
+      }, { status: 400 });
+    }
+
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+
+    // Get authenticated user
+    const user = await getCurrentUser(req);
+    if (!user) {
+      console.log("[User Location API] Unauthorized access attempt");
+      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+    }
+
+    // 2. Geocoding: Get city and country from Nominatim (OpenStreetMap)
+    let city: string | null = null;
+    let country: string | null = null;
+
+    try {
+      console.log("[User Location API] Initiating reverse geocoding...");
+      // Nominatim requires a User-Agent header and we force English for consistent naming
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`,
+        { 
+          headers: { 
+            'User-Agent': 'Zentia-Reel-App/1.0',
+            'Accept-Language': 'en' // Ensure results are in English
+          } 
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const addr = data.address;
+        
+        // Extract city (can be city, town, village, or suburb in Nominatim)
+        city = addr.city || addr.town || addr.village || addr.suburb || addr.municipality || null;
+        country = addr.country || null;
+        
+        console.log("[User Location API] Geocoding successful:", { city, country });
+      } else {
+        console.warn("[User Location API] Geocoding service returned error status:", response.status);
+      }
+    } catch (geocodeError) {
+      // 6. Error handling: If geocoding fails, save lat/lng and set city/country as null
+      console.error("[User Location API] Geocoding service failed:", geocodeError);
+    }
+
+    // 3. Database: Save latitude, longitude, city, and country in the user’s record
+    const userRepo = AppDataSource.getRepository(User);
+    
+    user.lat = lat;
+    user.lng = lng;
+    user.city = city;
+    user.country = country;
+
+    console.log("[User Location API] Saving record to DB for user:", user.email);
+    const savedUser = await userRepo.save(user);
+
+    // 4. API Response: Return latitude, longitude, city, and country
+    return NextResponse.json({
+      success: true,
+      message: 'Location synchronized successfully',
+      data: {
+        latitude: savedUser.lat,
+        longitude: savedUser.lng,
+        city: savedUser.city,
+        country: savedUser.country
+      }
+    });
+
+  } catch (err) {
+    console.error("[User Location API] Critical POST Error:", err);
     return NextResponse.json({ 
-      error: "Internal failure while updating localization.",
-      details: error.message 
+      success: false, 
+      message: "Internal sync error", 
+      details: err instanceof Error ? err.message : 'Unknown error' 
     }, { status: 500 });
   }
 }

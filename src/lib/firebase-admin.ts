@@ -61,19 +61,3 @@ const firebaseAdminApp = initializeFirebaseAdmin();
 
 export default admin;
 export { firebaseAdminApp };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

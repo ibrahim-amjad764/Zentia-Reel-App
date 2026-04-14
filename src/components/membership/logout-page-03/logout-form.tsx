@@ -2,8 +2,8 @@
 import { useState, forwardRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "../../../../components/ui/button";
-import { toast } from "sonner";
 import { logout } from "@/services/auth.service";
+import { toast } from "sonner";
 
 interface LogoutButtonProps {
   onDone?: () => void; // Optional callback after logout

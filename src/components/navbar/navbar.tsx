@@ -1,17 +1,17 @@
 "use client"
 
-import { useState, KeyboardEvent } from "react"
-import Link from "next/link"
-import { Avatar, AvatarFallback, AvatarImage } from "../../../components/ui/avatar"
-import { Button } from "../../../components/ui/button"
-import { Input } from "../../../components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../../components/ui/dropdown-menu"
-import LogoutButton from "@/components/membership/logout-page-03/logout-form"
-import { Plus, Moon, Sun } from "lucide-react"
-import { FiSearch } from "react-icons/fi"
-import { CreatePostModal } from "@/components/posts/CreatePostModal"
+import { Avatar, AvatarFallback, AvatarImage } from "../../../components/ui/avatar"
+import { useState, KeyboardEvent } from "react"
 import { NotificationBell } from "@/components/notifications/NotificationBell" // <-- Import here
 import { ModeToggleButton } from "../../../components/ui/mode-toggle"
+import { Plus, Moon, Sun } from "lucide-react"
+import { CreatePostModal } from "@/components/posts/CreatePostModal"
+import { FiSearch } from "react-icons/fi"
+import { Button } from "../../../components/ui/button"
+import { Input } from "../../../components/ui/input"
+import LogoutButton from "@/components/membership/logout-page-03/logout-form"
+import Link from "next/link"
 
 export function Navbar() {
   const [query, setQuery] = useState("")

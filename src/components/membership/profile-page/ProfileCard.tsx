@@ -4,8 +4,8 @@ import { useState, useRef } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { Loader2, Grid, Layout, Image as ImageIcon, Info, Heart, MessageCircle, Share2, MoreHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card } from "../../../../components/ui/card";
 import { Button } from "../../../../components/ui/button";
+import { Card } from "../../../../components/ui/card";
 import ProfileAboutPanel from "./ProfileAboutPanel";
 
 // Types
@@ -70,13 +70,11 @@ const ProfileCard = ({ posts = [], hasMore, loadMore, user }: ProfileCardProps) 
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`relative flex items-center gap-2 py-4 px-2 transition-all duration-300 group ${
-                  tab.mobileOnly ? "md:hidden" : ""
-                } ${
-                  activeTab === tab.id
+                className={`relative flex items-center gap-2 py-4 px-2 transition-all duration-300 group ${tab.mobileOnly ? "md:hidden" : ""
+                  } ${activeTab === tab.id
                     ? "text-[#FF7E5F]"
                     : "text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300"
-                }`}
+                  }`}
               >
                 <span className={`transition-transform duration-300 ${activeTab === tab.id ? "scale-110" : "group-hover:scale-110"}`}>
                   {tab.icon}
@@ -167,21 +165,21 @@ const PostCard = ({ post, index }: { post: Post; index: number }) => {
       <Card className="overflow-hidden bg-text-card-foreground dark:bg-zinc-900/40 backdrop-blur-xl border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] shadow-xs hover:shadow-xs transition-all duration-300 h-full flex flex-col">
         {post.images && post.images.length > 0 && (
           <div className="relative aspect-square overflow-hidden">
-            <img 
-              src={post.images[0]} 
-              alt="Post" 
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+            <img
+              src={post.images[0]}
+              alt="Post"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
         )}
         <div className="p-6 flex-1 flex flex-col justify-between">
           <div>
-             <p className="text-sm md:text-base text-gray-800 dark:text-zinc-200 line-clamp-3 leading-relaxed mb-4">
+            <p className="text-sm md:text-base text-gray-800 dark:text-zinc-200 line-clamp-3 leading-relaxed mb-4">
               {post.content}
             </p>
           </div>
-         
+
           <div className="flex items-center justify-between pt-4 border-t border-zinc-100 dark:border-zinc-800">
             <div className="flex gap-4">
               <button className="flex items-center gap-1.5 text-xs font-bold text-gray-500 dark:text-zinc-400 hover:text-red-500 transition-colors">
@@ -209,10 +207,10 @@ const MediaGridItem = ({ post, index }: { post: Post; index: number }) => (
     whileHover={{ scale: 0.98 }}
     className="relative aspect-square rounded-2xl overflow-hidden cursor-pointer group shadow-lg"
   >
-    <img 
-      src={post.images![0]} 
-      alt="Media" 
-      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-125" 
+    <img
+      src={post.images![0]}
+      alt="Media"
+      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-125"
     />
     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-4 transition-all duration-300">
       <div className="flex items-center gap-1 text-white"><Heart size={18} fill="white" /> {post.likesCount || 0}</div>

@@ -3,31 +3,17 @@
 import { fetchUserProfile, updateUserProfile } from "../../api/profile-user/user";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import { NotificationBell } from "../../../src/components/notifications/NotificationBell";
 import { CreatePostModal } from "../../../src/components/posts/CreatePostModal";
 import { SidebarProvider } from "../../../components/ui/sidebar";
-import { AvatarFallback } from "@radix-ui/react-avatar";
 import { searchUsers } from "../../../src/services/user.service";
 import { useDebounce } from "../../../src/lib/useDebounce";
-import { authFetch } from "../../../src/services/auth.service";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
-import { Avatar } from "../../../components/ui/avatar";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Moon } from "lucide-react";
-import SearchSuggestions from "../../../src/components/notifications/SearchSuggestions";
-import ProfileDropdown from "../../../components/ui/dropdown-profile";
 import ProfileContent from "../../../src/components/membership/profile-page/ProfileContent";
-import SearchBar from "../../../src/components/notifications/SearchBar";
-import Link from "next/link";
 import Loader from "../../../components/ui/Loader";
-import Image from "next/image";
-import { ModeToggleButton } from "../../../components/ui/mode-toggle";
-import { PremiumModeToggle } from "../../../components/ui/premium-mode-toggle";
 import PremiumNavbar from "../../../components/layout/PremiumNavbar";
-
 import EditProfilePreview from "../../../src/components/membership/profile-page/EditProfilePreview";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface ProfileUser {
   id?: string;
@@ -44,6 +30,8 @@ interface ProfileUser {
   github?: string;
   linkedin?: string;
   twitter?: string;
+  instagram?: string;
+  facebook?: string;
   skills?: string[];
   hobbies?: string[];
   followersCount?: number;

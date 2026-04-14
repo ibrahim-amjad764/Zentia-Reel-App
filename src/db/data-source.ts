@@ -46,6 +46,7 @@ if (typeof window === "undefined") {
     .then(() => console.log("[data-source] DataSource initialized successfully"))
     .catch(err => console.error("[data-source] DataSource initialization failed:", err));
 } else if (process.env.NODE_ENV === "development") {
+
   // Dev-only browser log
   // console.log("[data-source] Skipped DataSource initialization in browser (development mode)");
 }

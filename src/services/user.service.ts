@@ -1,4 +1,3 @@
-
 import { UserDTO } from "@/types/users";
 
 // CREATE user

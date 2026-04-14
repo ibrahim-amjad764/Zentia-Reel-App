@@ -4,8 +4,8 @@ import { FollowButton } from "../profile-page/FollowButton";
 import { Loader2 } from "lucide-react";
 import { Card } from "../../../../components/ui/card";
 import InfiniteScroll from "react-infinite-scroll-component";
-import ProfileHeader from "./ProfileHeader";
 import ProfileContent from "./ProfileContent";
+import ProfileHeader from "./ProfileHeader";
 import React from "react";
 import Link from "next/link";
 
@@ -187,7 +187,11 @@ export default function ProfilePageClient({
       </div>
 
       {/* Edit Profile Section */}
-      {editable && <ProfileContent user={user} onSave={async () => { }} onCancel={() => { }} isSaving={false} />}
+      <ProfileContent
+        user={user} onSave={async () => { }} onCancel={() => { }} isSaving={false} onUpdate={(updatedUser) => {
+          console.log("updated user:", updatedUser);
+        }}
+      />
     </div>
   );
 }

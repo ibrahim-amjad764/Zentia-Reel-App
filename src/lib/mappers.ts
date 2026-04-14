@@ -12,7 +12,6 @@ export const mapUserForComponents = (user: UserEntity) => ({
   avatarUrl: user.avatarUrl,
   bio: user.bio,
   jobTitle: user.jobTitle,
-  company: user.company,
   location: user.location,
   createdAt: user.createdAt?.toISOString() || "",
 });

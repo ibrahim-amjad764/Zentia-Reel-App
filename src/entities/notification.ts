@@ -1,9 +1,7 @@
-// // src/entities/notification.ts
-
+// src/entities/notification.ts
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, Index, JoinColumn } from "typeorm";
-import { User } from "./user";
-import { Post } from "./post";
-import { error } from "console";
+import type { User } from "./user";
+import type { Post } from "./post";
 
 export enum NotificationType {
   LIKE = "LIKE",
@@ -18,10 +16,10 @@ export class Notification {
   @PrimaryGeneratedColumn("uuid")
   id!: string; // definite assignment assertion
 
-  @ManyToOne(() => User, user => user.notifications, { nullable: false })
+  @ManyToOne("User", { nullable: false })
   recipient!: User; // Who receives the notification
 
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne("User", { nullable: true })
   sender?: User; // Who triggered it (like/comment/follow)
 
   @Column({ type: "enum", enum: NotificationType })
@@ -33,7 +31,7 @@ export class Notification {
   @Column({ type: "uuid", nullable: true })
   postId?: string;
 
-  @ManyToOne(() => Post, { nullable: true })
+  @ManyToOne("Post", "notifications", { nullable: true, onDelete: "CASCADE" })
   @JoinColumn({ name: "postId" })
   post?: Post;
 

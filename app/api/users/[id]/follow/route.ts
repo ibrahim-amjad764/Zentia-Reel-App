@@ -1,13 +1,13 @@
 // src/app/api/users/[id]/follow/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "../../../../../src/lib/auth";
-import { initDB } from "../../../../../src/db/init-db";
-import { AppDataSource } from "../../../../../src/db/data-source";
-import { Follow } from "../../../../../src/entities/follow";
-import { User } from "../../../../../src/entities/user";
 import { NotificationService } from "../../../../../src/services/notification.service";
 import { NotificationType } from "../../../../../src/entities/notification";
+import { getCurrentUser } from "../../../../../src/lib/auth";
+import { AppDataSource } from "../../../../../src/db/data-source";
+import { initDB } from "../../../../../src/db/init-db";
+import { Follow } from "../../../../../src/entities/follow";
+import { User } from "../../../../../src/entities/user";
 
 export const runtime = "nodejs";
 

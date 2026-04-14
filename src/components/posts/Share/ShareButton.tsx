@@ -17,12 +17,6 @@ export function ShareButton() {
 
   return (
     <>
-      {/* Trigger button with motion */}
-      {/* <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        > */}
         <div className="relative z-10">
         <DialogTrigger onOpen={() => setIsOpen(true)}>
           <Button
@@ -33,20 +27,10 @@ export function ShareButton() {
             <Share2 className="h-4 w-4 mr-1 " /> Share
           </Button>
         </DialogTrigger>
-      {/* </motion.div> */}
 
-      {/* Modal with AnimatePresence and motion */}
-      {/* <AnimatePresence> */}
         {isOpen && (
           <Dialog isOpen={isOpen} onClose={() => setIsOpen(false)}>
             <DialogContent className="sm:max-w-[300px]">
-              {/* <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-                className="flex flex-col"
-              > */}
                 <DialogHeader>
                   <DialogTitle>Share Post</DialogTitle>
                 </DialogHeader>
@@ -80,12 +64,10 @@ export function ShareButton() {
                     Copy Link
                   </Button>
                 </div>
-              {/* </motion.div> */}
             </DialogContent>
           </Dialog>
         )}
         </div>
-      {/* </AnimatePresence> */}
     </>
   );
 }

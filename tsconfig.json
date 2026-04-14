@@ -3,37 +3,43 @@
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "bundler",
-
-    "lib": ["DOM", "ES2020"],
+    "lib": [
+      "DOM",
+      "ES2020"
+    ],
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-
     "noEmit": false,
     "outDir": "dist",
     "rootDir": ".",
-
     "baseUrl": ".",
     "ignoreDeprecations": "6.0",
-
     "paths": {
-      "@/*": ["src/*"],
-      "@entities/*": ["src/entities/*"],
-      "@db/*": ["src/db/*"],
-      "@lib/*": ["src/lib/*"],
-      "@components/*": ["components/*"]
+      "@/*": [
+        "src/*"
+      ],
+      "@entities/*": [
+        "src/entities/*"
+      ],
+      "@db/*": [
+        "src/db/*"
+      ],
+      "@lib/*": [
+        "src/lib/*"
+      ],
+      "@components/*": [
+        "components/*"
+      ]
     },
-
     "allowJs": true,
     "incremental": true,
-    "jsx": "react-jsx",
-
+    "jsx": "preserve",
     "plugins": [
       {
         "name": "next"
@@ -46,5 +52,8 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", ".next"]
+  "exclude": [
+    "node_modules",
+    ".next"
+  ]
 }

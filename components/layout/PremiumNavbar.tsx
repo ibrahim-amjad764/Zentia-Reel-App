@@ -1,31 +1,17 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
 import { Search, Home, Compass, MessageSquare, Sparkles, Bell, Menu, X } from "lucide-react";
-
-// UI Components (Using paths relative to components/layout)
-import { Button } from "../ui/button";
+import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Avatar, AvatarFallback } from "../ui/avatar";
-import ProfileDropdown from "../ui/dropdown-profile";
 import { PremiumModeToggle } from "../ui/premium-mode-toggle";
 import { NotificationBell } from "../../src/components/notifications/NotificationBell";
-// import { AdvancedSearchBar } from "../../src/components/search/AdvancedSearchBar";
+import { Button } from "../ui/button";
+import Link from "next/link";
+import Image from "next/image";
+import ProfileDropdown from "../ui/dropdown-profile";;
 import SearchBar from "@/components/notifications/SearchBar";
 import SearchSuggestions from "@/components/notifications/SearchSuggestions";
-
-/**
- * PremiumNavbar Component
- * 
- * Purpose: A luxury-tier navigation bar with gold accents and a sophisticated adaptive layout.
- * Features:
- * - Responsive design: Seamlessly transitions between mobile, tablet, and desktop views.
- * - Mobile Menu: High-end drawer for navigation on smaller devices.
- * - Gold-gradient typography for branding
- * - Integrated Search and Profile management
- */
 
 interface PremiumNavbarProps {
   query: string;

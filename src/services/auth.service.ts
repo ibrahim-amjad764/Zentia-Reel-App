@@ -1,5 +1,4 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
-// import { auth } from "@/src/lib/firebase"
 import { signOut } from "firebase/auth";
 import { getAuth } from "firebase/auth"
 import { app } from "@/lib/firebase"

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "../../../src/lib/auth";
 import { AppDataSource } from "../../../src/db/data-source";
 import { Notification } from "../../../src/entities/notification";
-import "@/lib/notificationWsServer";
+import "../../../src/lib/notificationWsServer";
 
 export const runtime = "nodejs";
 /* GET /api/notifications  -- get all notification */

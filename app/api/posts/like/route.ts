@@ -1,15 +1,14 @@
 // app/api/posts/like/route.ts
-import { NextRequest } from "next/server";
+import { NotificationService } from "../../../../src/services/notification.service";
+import { NotificationType } from "../../../../src/entities/notification";
 import { AppDataSource } from "../../../../src/db/data-source";
-import { Like } from "../../../../src/entities/like";
-import { User } from "../../../../src/entities/user";
-import admin from "../../../../src/lib/firebase-admin";
+import { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { initDB } from "../../../../src/db/init-db";
+import { Like } from "../../../../src/entities/like";
+import { User } from "../../../../src/entities/user";
 import { Post } from "../../../../src/entities/post";
-import { NotificationService } from "../../../../src/services/notification.service";
-
-import { NotificationType } from "../../../../src/entities/notification";
+import admin from "../../../../src/lib/firebase-admin";
 
 
 export const runtime = "nodejs";

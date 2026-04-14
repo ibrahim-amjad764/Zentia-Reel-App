@@ -1,10 +1,10 @@
 // app/api/profile-user/profile/route.ts (or the appropriate file path)
+import type { Repository } from "typeorm";
+import {  AppDataSource } from "../../../../src/db/data-source";
+import { cookies } from "next/headers";
 import { initDB } from "../../../../src/db/init-db";
-import { AppDataSource } from "../../../../src/db/data-source";
 import { User } from "../../../../src/entities/user";
 import admin from "../../../../src/lib/firebase-admin";
-import { cookies } from "next/headers";
-import type { Repository } from "typeorm";
 
 // Email Format validation function
 function isValidEmail(email: unknown): email is string {
@@ -122,8 +122,11 @@ export async function GET() {
 
     console.log(`[Profile API] GET success for ${user.email}. Followers: ${followersCount}, Following: ${followingCount}`);
     
+    // Use toJSON to ensure all decorators and defaults are applied correctly
+    const userJson = typeof user.toJSON === 'function' ? user.toJSON() : user;
+    
     return Response.json({
-      ...user,
+      ...userJson,
       followersCount,
       followingCount
     });
@@ -170,31 +173,77 @@ export async function PUT(req: Request) {
       email: typeof body?.email === "string" ? body.email.trim() : target.email,
       avatarUrl: typeof body?.avatarUrl === "string" ? body.avatarUrl.trim() : target.avatarUrl,
       bio: typeof body?.bio === "string" ? body.bio.trim() : target.bio,
-      jobTitle: typeof body?.jobTitle === "string" ? body.jobTitle.trim() : target.jobTitle,
-      company: typeof body?.company === "string" ? body.company.trim() : target.company,
       phone: typeof body?.phone === "string" ? body.phone.trim() : target.phone,
-      location: typeof body?.location === "string" ? body.location.trim() : target.location,
       website: typeof body?.website === "string" ? body.website.trim() : target.website,
-      github: typeof body?.github === "string" ? body.github.trim() : target.github,
-      linkedin: typeof body?.linkedin === "string" ? body.linkedin.trim() : target.linkedin,
-      twitter: typeof body?.twitter === "string" ? body.twitter.trim() : target.twitter,
       skills: normalizeTags(body?.skills) ?? target.skills,
       hobbies: normalizeTags(body?.hobbies) ?? target.hobbies,
       lat: typeof body?.lat === "number" ? body.lat : target.lat,
       lng: typeof body?.lng === "number" ? body.lng : target.lng,
       city: typeof body?.city === "string" ? body.city.trim() : target.city,
       country: typeof body?.country === "string" ? body.country.trim() : target.country,
+      social: {
+        ...target.social,
+        ...(body?.github && { github: body.github.trim() }),
+        ...(body?.linkedin && { linkedin: body.linkedin.trim() }),
+        ...(body?.twitter && { twitter: body.twitter.trim() }),
+        ...(body?.instagram && { instagram: body.instagram.trim() }),
+        ...(body?.facebook && { facebook: body.facebook.trim() }),
+      },
+      achievements: Array.isArray(body?.achievements) ? body.achievements : target.achievements,
+      profile: {
+        ...target.profile,
+        ...(body?.jobTitle && { jobTitle: body.jobTitle.trim() }),
+        ...(body?.company && { company: body.company.trim() }),
+      }
     };
 
     Object.assign(target, update);
 
-    const saved = await repo.save(target);
+    console.log("[Profile API PUT] Attempting to save user with data:", {
+      email: target.email,
+      lat: target.lat,
+      lng: target.lng,
+      location: target.location,
+      website: body.website,
+      social: {
+        ...target.social,
+        ...(body?.github && { github: body.github.trim() }),
+        ...(body?.linkedin && { linkedin: body.linkedin.trim() }),
+        ...(body?.twitter && { twitter: body.twitter.trim() }),
+        ...(body?.instagram && { instagram: body.instagram.trim() }),
+        ...(body?.facebook && { facebook: body.facebook.trim() }),
+      }
+    });
 
-    console.log("[Profile API] PUT success:", saved.email);
-    return Response.json(saved);
+    try {
+      const saved = await repo.save(target);
+      console.log("[Profile API] PUT success:", saved.email);
+      return Response.json(saved);
+    } catch (saveError) {
+      console.error("[Profile API] Database save error:", saveError);
+      const errorMessage = saveError instanceof Error ? saveError.message : 'Unknown database error';
+      console.error("[Profile API] Save error details:", {
+        name: saveError instanceof Error ? saveError.name : 'Unknown',
+        message: errorMessage,
+        stack: saveError instanceof Error ? saveError.stack : 'No stack trace'
+      });
+      return Response.json({ 
+        error: "Database save failed", 
+        details: errorMessage 
+      }, { status: 500 });
+    }
 
   } catch (err) {
     console.error("PUT /api/profile-user/profile ERROR:", err);
-    return Response.json({ error: "Update failed" }, { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    console.error("[Profile API] Full error details:", {
+      name: err instanceof Error ? err.name : 'Unknown',
+      message: errorMessage,
+      stack: err instanceof Error ? err.stack : 'No stack trace'
+    });
+    return Response.json({ 
+      error: "Update failed", 
+      details: errorMessage 
+    }, { status: 500 });
   }
 }

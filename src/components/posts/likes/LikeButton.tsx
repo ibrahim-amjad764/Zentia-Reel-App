@@ -1,20 +1,9 @@
 "use client";
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "../../../../components/ui/button";
 import { motion } from "framer-motion";
 import { Heart } from "lucide-react";
-
-/**
- * Zentia Premium LikeButton
- * 
- * Purpose: Provides a highly interactive like action with optimistic 
- * updates and Zentia's signature soft coral aesthetic.
- * 
- * Design: Features smooth heart animations, vibrant color transitions, 
- * and robust error recovery.
- */
 
 interface LikeButtonProps {
   postId: string;

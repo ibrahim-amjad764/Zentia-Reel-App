@@ -1,23 +1,12 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Bell, Sparkles } from "lucide-react";
+import { connectNotificationSocket } from "../../lib/notificationSocket";
+import { motion, AnimatePresence } from "framer-motion";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { useNotificationStore } from "../../store/notificationStore";
-import { connectNotificationSocket } from "../../lib/notificationSocket";
+import { Bell, Sparkles } from "lucide-react";
 import api from "../../lib/api";
-import { motion, AnimatePresence } from "framer-motion";
-
-/**
- * NotificationBell component
- * 
- * Purpose: A luxury-tier notification trigger for the Zentia platform.
- * Features:
- * - Gold-gradient unread badge with reflective effects
- * - Dynamic bell animations (shake, bounce)
- * - Seamless integration with luxury NotificationDropdown
- * - Real-time synchronization via WebSocket
- */
 
 export function NotificationBell() {
   const { unreadCount, setNotifications, setCurrentUserId } = useNotificationStore();

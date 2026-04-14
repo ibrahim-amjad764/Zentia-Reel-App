@@ -1,14 +1,15 @@
 // app/api/posts/route.ts
-import { NextResponse } from "next/server";
-import { initDB } from "../../../src/db/init-db";
 import { AppDataSource } from "../../../src/db/data-source";
-import admin from "../../../src/lib/firebase-admin";
-import { Post } from "../../../src/entities/post";
-import { Like } from "../../../src/entities/like";
+import { NextResponse } from "next/server";
+import { postSchema } from "../../../src/lib/validation";
 import { Comment } from "../../../src/entities/comment";
-import { User } from "../../../src/entities/user";
 import { cookies } from "next/headers";
+import { initDB } from "../../../src/db/init-db";
+import { Post } from "../../../src/entities/post";
+import { User } from "../../../src/entities/user";
+import { Like } from "../../../src/entities/like";
 import { In } from "typeorm";
+import admin from "../../../src/lib/firebase-admin";
 
 // Helper: Get authenticated user
 async function getAuthUser(): Promise<User | null> {
@@ -192,51 +193,63 @@ export async function GET(req: Request) {
   }
 }
 
-// --- POST: Create new post ---
-export async function POST(req: Request) {
+// --- POST: Create new post with Validation ---
+export async function POST( req: Request ) {
   console.log("[POST /api/posts] Start request");
 
-  try {
+  try{
     // Ensure database is initialized using consistent initDB function
     await initDB();
     if (!AppDataSource) {
-      console.error("[POST /api/posts] AppDataSource is null after initDB");
-      return NextResponse.json({ error: "Database not initialized" }, { status: 500 });
+      console.error("[POST /api/posts] AppDataSource is null after initDB")
+      return NextResponse.json({ error: "Database not initialized"}, { status: 500 });
     }
 
     const currentUser = await getAuthUser();
-    if (!currentUser) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    if (!currentUser) return NextResponse.json({ message: "Unauthorized"}, { status: 401 });
 
-    const { content, images } = await req.json();
+    const body = await req.json();
+    console.log("[POST /api/posts] Request body:", {contentLength: body.content?.length, imageCount: body.image?.length});
 
-    if (!content || typeof content !== "string" || !content.trim()) {
-      return NextResponse.json({ error: "Post content is required" }, { status: 400 });
-    }
-
-    if (images && !Array.isArray(images)) {
-      return NextResponse.json({ error: "Images must be an array" }, { status: 400 });
-    }
+    // SECURITY: Validate input data to prevent XSS and injection attacks
+    const validatedData = postSchema.parse(body);
+    console.log("[POST /api/posts] Input validation passed");
 
     const postRepo = AppDataSource.getRepository(Post);
-    // const post = await postRepo.findOne({
-    //   where: { id: postId },
-    //   relation: ["user"], 
-    // });
 
-    const savedPost = await postRepo.save({
-      content: content.trim(),
-      images: images || [],
+    // ROBUSTNESS: Use the latest validated data to construct the post object. 
+    // We anchor the post to the user's location at the time of creation for feed filtering.
+    const postData = {
+      content: validatedData.content,
+      images: validatedData.images || [],
       user: currentUser,
-      lat: currentUser.lat,
-      lng: currentUser.lng,
-      city: currentUser.city,
-      country: currentUser.country
+      // LOCATION ANCHORING: Capture current user geolocation coordinates
+      // We use the nullish coalescing operator to handle cases where user location might be unset
+      lat: currentUser.lat ?? undefined,
+      lng: currentUser.lng ?? undefined,
+      city: currentUser.city ?? undefined,
+      country: currentUser.country ?? undefined      
+    };
+
+    // OPTIMIZED: TypeORM save() handles both insert and update gracefully
+    const savedPost = await postRepo.save(postData);
+
+    console.log("[POST /api/posts] Post created successfully with location metadata:", {
+      id: savedPost.id,
+      city: savedPost.city,
+      hasImages: savedPost.images.length > 0
     });
-    console.log("[POST /api/posts] Post created with location anchoring:", savedPost.id);
 
     return NextResponse.json(savedPost, { status: 201 });
   } catch (error) {
-    console.error("[POST /api/posts] Error:", error);
+    console.log("[POST / api/posts] Error:", error);
+ 
+    // SECURITY: Don't expose validation errors to client
+    if (error instanceof Error && error.name === 'ZodError') {
+      console.log("[POST /api/posts] Validation error:", error.message);
+      return NextResponse.json({ error: "Invalid input data" }, { status: 400 });
+    }
+    
     return NextResponse.json({ error: "Failed to create post" }, { status: 500 });
   }
 }

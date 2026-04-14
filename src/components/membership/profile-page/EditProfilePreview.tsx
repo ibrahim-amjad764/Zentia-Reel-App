@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Avatar, AvatarImage, AvatarFallback } from "../../../../components/ui/avatar";
+import { MapPin, Briefcase, Globe, Mail, Instagram, Twitter, Linkedin, Facebook, Github } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "../../../../components/ui/badge";
-import { MapPin, Briefcase, Globe, Mail } from "lucide-react";
 import { Card } from "../../../../components/ui/card";
 
 interface PreviewData {
@@ -15,16 +15,17 @@ interface PreviewData {
   bio?: string;
   jobTitle?: string;
   company?: string;
-  location?: string;
+  location?: any;
   website?: string;
+  github?: string;
+  linkedin?: string;
+  twitter?: string;
+  instagram?: string;
+  facebook?: string;
   followersCount?: number;
   followingCount?: number;
 }
 
-/**
- * Real-time Live Preview component for the Edit Profile page.
- * Mirrors the main profile aesthetics in a compact, floating card.
- */
 export default function EditProfilePreview({ data }: { data: PreviewData }) {
   const fullName = `${data.firstName || ""} ${data.lastName || ""}`.trim() || "Your Name";
 
@@ -53,7 +54,7 @@ export default function EditProfilePreview({ data }: { data: PreviewData }) {
                 </AvatarFallback>
               </Avatar>
             </div>
-            
+
             <div className="flex gap-4">
               <div className="text-center">
                 <div className="text-sm font-bold">{data.followersCount || 0}</div>
@@ -69,7 +70,7 @@ export default function EditProfilePreview({ data }: { data: PreviewData }) {
           {/* Info Area */}
           <div className="space-y-4">
             <div>
-              <motion.h2 
+              <motion.h2
                 key={fullName}
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -77,10 +78,10 @@ export default function EditProfilePreview({ data }: { data: PreviewData }) {
               >
                 {fullName}
               </motion.h2>
-              
+
               <AnimatePresence mode="wait">
                 {data.jobTitle && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -94,7 +95,7 @@ export default function EditProfilePreview({ data }: { data: PreviewData }) {
             </div>
 
             <AnimatePresence mode="wait">
-              <motion.p 
+              <motion.p
                 key={data.bio}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -105,23 +106,57 @@ export default function EditProfilePreview({ data }: { data: PreviewData }) {
             </AnimatePresence>
 
             <div className="grid grid-cols-1 gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800/50">
-              {data.location && (
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <MapPin size={12} className="text-[#FEB47B]" />
-                  <span>{data.location}</span>
+                  <span>
+                    {typeof data.location === 'object' && data.location
+                      ? ([data.location.city, data.location.country].filter(Boolean).join(", ") || 
+                         (data.location.lat && data.location.lng ? `${Number(data.location.lat).toFixed(2)}, ${Number(data.location.lng).toFixed(2)}` : "Orbiting Space"))
+                      : (data.location || "Orbiting Space")}
+                  </span>
                 </div>
-              )}
               {data.website && (
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <Globe size={12} className="text-[#FEB47B]" />
                   <span className="truncate">{data.website.replace(/^https?:\/\//, "")}</span>
                 </div>
               )}
+              {data.instagram && (
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Instagram size={12} className="text-[#FEB47B]" />
+                  <span className="truncate">{data.instagram}</span>
+                </div>
+              )}
+              {data.twitter && (
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Twitter size={12} className="text-[#FEB47B]" />
+                  <span className="truncate">{data.twitter}</span>
+                </div>
+              )}
+              {data.linkedin && (
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Linkedin size={12} className="text-[#FEB47B]" />
+                  <span className="truncate">{data.linkedin}</span>
+                </div>
+              )}
+              {data.facebook && (
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Facebook size={12} className="text-[#FEB47B]" />
+                  <span className="truncate">{data.facebook}</span>
+                </div>
+              )}
+              {/* {data.github && (
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Github size={12} className="text-[#FEB47B]" />
+                  <span className="truncate">{data.github}</span>
+                </div>
+              )} */}
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 <Mail size={12} className="text-[#FEB47B]" />
-                <span>{data.email}</span>
+                <span className="truncate">{data.email}</span>
               </div>
             </div>
+
 
             {/* Mock Action Button */}
             <div className="pt-4">
@@ -131,12 +166,12 @@ export default function EditProfilePreview({ data }: { data: PreviewData }) {
             </div>
           </div>
         </div>
-      </Card>
+      </Card >
 
       {/* Profile Strength Indicator */}
-      <Card className="mt-8 p-6 bg-zinc-950 dark:bg-[#0A0A0A] border-none rounded-[2rem] text-white shadow-xl overflow-hidden relative group">
+      < Card className="mt-8 p-6 bg-zinc-950 dark:bg-[#0A0A0A] border-none rounded-[2rem] text-white shadow-xl overflow-hidden relative group" >
         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-125 transition-transform duration-500">
-           <Briefcase className="w-12 h-12" />
+          <Briefcase className="w-12 h-12" />
         </div>
         <div className="relative z-10">
           <div className="flex justify-between items-end mb-3">
@@ -144,7 +179,7 @@ export default function EditProfilePreview({ data }: { data: PreviewData }) {
             <span className="text-xl font-black">85%</span>
           </div>
           <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-            <motion.div 
+            <motion.div
               initial={{ width: 0 }}
               animate={{ width: "85%" }}
               className="h-full bg-gradient-to-r from-[#FF7E5F] to-[#FEB47B]"
@@ -154,7 +189,7 @@ export default function EditProfilePreview({ data }: { data: PreviewData }) {
             You're almost there! Add social links to reach 100%.
           </p>
         </div>
-      </Card>
-    </div>
+      </Card >
+    </div >
   );
 }

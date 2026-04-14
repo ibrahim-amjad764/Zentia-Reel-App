@@ -2,37 +2,113 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { 
-  Briefcase, 
-  MapPin, 
-  Calendar, 
-  Mail, 
-  Linkedin, 
-  Twitter, 
+import {
+  Briefcase,
+  MapPin,
+  Calendar,
   Globe,
+  BookOpen,
+  Linkedin,
+  Twitter,
+  Instagram,
+  Facebook,
+  Mail,
   Award,
-  BookOpen
+  Github,
 } from "lucide-react";
 import { Card } from "../../../../components/ui/card";
+import { toast } from "sonner";
+import AchievementsSection from "./AchievementsSection";
 
 interface ProfileAboutPanelProps {
   user: {
+    id?: string;
     bio?: string;
     jobTitle?: string;
     company?: string;
-    location?: string;
+    location?: any;
     createdAt?: string;
     email: string;
+    lat?: number | null;
+    lng?: number | null;
+    achievements?: any[];
+    social?: Record<string, string>;
+    website?: string;
   };
 }
 
 const ProfileAboutPanel = ({ user }: ProfileAboutPanelProps) => {
   const joinedDate = user.createdAt
     ? new Date(user.createdAt).toLocaleDateString("en-US", {
-        month: "long",
-        year: "numeric",
-      })
+      month: "long",
+      year: "numeric",
+    })
     : "Joined recently";
+
+  console.log("[ProfileAboutPanel] User data received:", {
+    email: user.email,
+    social: user.social,
+    hasInstagram: !!user.social?.instagram,
+    hasFacebook: !!user.social?.facebook,
+    hasTwitter: !!user.social?.twitter,
+    hasLinkedin: !!user.social?.linkedin,
+    hasWebsite: !!user.social?.website
+  });
+
+  const handleSocialClick = (platform: string) => {
+    console.log("[ProfileAboutPanel] Social link clicked:", platform);
+    console.log("[ProfileAboutPanel] Full user data:", user);
+
+    // Get the link from both social and website fields
+    let link = user.social?.[platform];
+    console.log(`[ProfileAboutPanel] user.social.${platform}:`, link);
+
+    // Special handling for website field (stored separately from social)
+    if (!link && platform === 'website') {
+      link = user.website;
+      console.log("[ProfileAboutPanel] Using user.website field:", link);
+    }
+
+    console.log("[ProfileAboutPanel] Final link to open:", link);
+
+    if (!link) {
+      console.log("[ProfileAboutPanel] No link found for platform:", platform);
+
+      // Show user-friendly toast notification
+      const platformNames: Record<string, string> = {
+        twitter: 'Twitter',
+        linkedin: 'LinkedIn',
+        instagram: 'Instagram',
+        facebook: 'Facebook',
+        github: 'GitHub',
+        website: 'Personal Website'
+      };
+
+      toast.error(`${platformNames[platform] || platform} link not added yet. Add it in Edit Profile!`);
+      return; // Do nothing if no link exists
+    }
+
+    // Validate and format URL
+    let url = link;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = `https://${url}`;
+      console.log("[ProfileAboutPanel] Added https:// prefix:", url);
+    }
+
+    // Validate URL format
+    try {
+      const urlObj = new URL(url);
+      console.log("[ProfileAboutPanel] Valid URL object created:", urlObj.href);
+
+      // Open in new tab
+      console.log("[ProfileAboutPanel] Attempting to open URL:", urlObj.href);
+      const opened = window.open(urlObj.href, '_blank', 'noopener,noreferrer');
+      console.log("[ProfileAboutPanel] window.open returned:", opened);
+    } catch (err) {
+      console.error("[ProfileAboutPanel] Invalid URL format:", link, err);
+      toast.error("Invalid social media link format");
+    }
+  };
 
   return (
     <motion.div
@@ -46,7 +122,7 @@ const ProfileAboutPanel = ({ user }: ProfileAboutPanelProps) => {
         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-40 transition-opacity">
           <BookOpen className="w-12 h-12 text-[#FF7E5F]" />
         </div>
-        
+
         <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           About
         </h3>
@@ -69,12 +145,15 @@ const ProfileAboutPanel = ({ user }: ProfileAboutPanelProps) => {
 
           <div className="flex items-center gap-3 group/item">
             <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500 group-hover:scale-110 transition-transform">
-              <MapPin size={16} />
+              <MapPin size={18} />
             </div>
             <div>
               <p className="text-xs text-gray-500 dark:text-zinc-500">Location</p>
               <p className="text-sm font-medium text-gray-800 dark:text-zinc-200">
-                {user.location || "Earth"}
+                {typeof user.location === 'object' && user.location
+                  ? ([user.location.city, user.location.country].filter(Boolean).join(", ") ||
+                    (user.location.lat && user.location.lng ? `${Number(user.location.lat).toFixed(4)}, ${Number(user.location.lng).toFixed(4)}` : "Earth"))
+                  : (user.location || "Earth")}
               </p>
             </div>
           </div>
@@ -92,35 +171,10 @@ const ProfileAboutPanel = ({ user }: ProfileAboutPanelProps) => {
           </div>
         </div>
       </Card>
-
-      {/* Skills/Badges Section */}
       <Card className="p-6 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl border-white/20 dark:border-zinc-800 rounded-3xl">
-       <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                 Achievements
-                   {user.jobTitle && (
-                     <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-[#FF7E5F]/20 to-[#FEB47B]/20 border border-[#FF7E5F]/40 rounded-full">
-                       <Award size={14} className="text-[#FF7E5F]" />
-                       <span className="text-[10px] uppercase tracking-wider font-bold text-[#FF7E5F]">{user.jobTitle}</span>
-                     </div>
-                   )}
-               </h3>
-               <div className="flex flex-wrap gap-2">
-                 {user.jobTitle && (
-                   <span 
-                     className="px-3 py-1.5 rounded-full text-[10px] uppercase tracking-wider font-bold bg-gradient-to-r from-[#FF7E5F]/10 to-[#FEB47B]/10 text-[#FF7E5F] border border-[#FF7E5F]/30 cursor-default"
-                   >
-                     {user.jobTitle}
-                   </span>
-                 )}
-                 {["Pioneer", "Creator", "Early Adopter", "Influencer"].map((badge) => (
-                   <span 
-                     key={badge}
-                     className="px-3 py-1.5 rounded-full text-[10px] uppercase tracking-wider font-bold bg-zinc-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 hover:border-[#FF7E5F] transition-colors cursor-default"
-                   >
-                     {badge}
-                   </span>
-                 ))}
-               </div>
+
+        {/* Dynamic Achievements Section */}
+        {user.achievements && <AchievementsSection achievements={user.achievements} user={user} />}
       </Card>
 
       {/* Links Card */}
@@ -129,15 +183,39 @@ const ProfileAboutPanel = ({ user }: ProfileAboutPanelProps) => {
           Social Presence
         </h3>
         <div className="grid grid-cols-2 gap-3">
-          <button className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 hover:bg-[#FF7E5F]/10 hover:text-[#FF7E5F] transition-all group">
+          <button
+            onClick={() => handleSocialClick('twitter')}
+            className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 hover:bg-[#FF7E5F]/10 hover:text-[#FF7E5F] transition-all group"
+          >
             <Twitter size={18} className="group-hover:rotate-12 transition-transform" />
             <span className="text-xs font-medium">Twitter</span>
           </button>
-          <button className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 hover:bg-blue-600/10 hover:text-blue-600 transition-all group">
+          <button
+            onClick={() => handleSocialClick('linkedin')}
+            className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 hover:bg-blue-600/10 hover:text-blue-600 transition-all group"
+          >
             <Linkedin size={18} className="group-hover:-rotate-12 transition-transform" />
             <span className="text-xs font-medium">LinkedIn</span>
           </button>
-          <button className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all col-span-2 group">
+          <button
+            onClick={() => handleSocialClick('instagram')}
+            className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 hover:bg-pink-600/10 hover:text-pink-600 transition-all group"
+          >
+            <Instagram size={18} className="group-hover:-rotate-12 transition-transform" />
+            <span className="text-xs font-medium">Instagram</span>
+          </button>
+          <button
+            onClick={() => handleSocialClick('facebook')}
+            className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 hover:bg-blue-600/10 hover:text-blue-600 transition-all group"
+          >
+            <Facebook size={18} className="group-hover:-rotate-12 transition-transform" />
+            <span className="text-xs font-medium">Facebook</span>
+          </button>
+
+          <button
+            onClick={() => handleSocialClick('website')}
+            className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all col-span-2 group"
+          >
             <Globe size={18} className="group-hover:animate-pulse" />
             <span className="text-xs font-medium">Personal Website</span>
           </button>

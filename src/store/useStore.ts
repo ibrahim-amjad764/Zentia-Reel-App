@@ -3,14 +3,9 @@ import { create } from "zustand";
 type ThemeMode = "light" | "dark";
 
 type StoreState = {
-  /**
-   * PURPOSE: Single source of truth for UI color mode.
-   * The app must NOT follow system preferences; only the dedicated toggle can change this.
-   */
+
   mode: ThemeMode;
-  /**
-   * PURPOSE: Whether initial mode was loaded from storage (prevents flicker/overwrites).
-   */
+
   hydrated: boolean;
   setMode: (mode: ThemeMode) => void;
   toggleMode: () => void;

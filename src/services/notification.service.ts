@@ -1,8 +1,8 @@
-import { DataSource } from "typeorm";
-import { AppDataSource } from "../db/data-source";
 import { Notification, NotificationType } from "../entities/notification";
-import { User } from "../entities/user";
 import { pushNotificationToUser } from "@/lib/notificationWsServer";
+import { AppDataSource } from "../db/data-source";
+import { DataSource } from "typeorm";
+import { User } from "../entities/user";
 
 const ensureDb = async (): Promise<DataSource> => {
   if (!AppDataSource) {

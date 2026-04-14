@@ -1,13 +1,11 @@
 "use server";
-import { notFound } from "next/navigation";
-import { AppDataSource } from "../../../src/db/data-source";
-import { initDB } from "../../../src/db/init-db";
-
+import { Comment as CommentEntity } from "../../../src/entities/comment";
 import { User as UserEntity } from "../../../src/entities/user";
 import { Post as PostEntity } from "../../../src/entities/post";
-import { Comment as CommentEntity } from "../../../src/entities/comment";
 import { Like as LikeEntity } from "../../../src/entities/like";
-
+import { AppDataSource } from "../../../src/db/data-source";
+import { initDB } from "../../../src/db/init-db";
+import { notFound } from "next/navigation";
 import BackButton from "../../../src/components/shared/BackButton";
 import ProfileTabs from "../../../src/components/membership/profile-page/ProfileTabs";
 

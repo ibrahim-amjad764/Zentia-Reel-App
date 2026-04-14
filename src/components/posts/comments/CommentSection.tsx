@@ -1,18 +1,9 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { MessageCircle, Plus, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Avatar, AvatarFallback } from "../../../../components/ui/avatar";
 import { Textarea } from "../../../../components/ui/textarea";
 import { Button } from "../../../../components/ui/button";
-import { MessageCircle, Plus, Loader2 } from "lucide-react";
-
-/**
- * Zentia Premium Comment Section
- * 
- * Purpose: Provides a real-time, visually rich discussion interface for posts.
- * 
- * Design: Features soft color integration, glassmorphism, and smooth animations
- * that align with the Zentia brand identity (Coral, Peach, Slate).
- */
 
 interface Comment {
   id: string;
@@ -130,37 +121,95 @@ const CommentSection = ({ postId, userId }: CommentSectionProps) => {
     };
   }, [postId, userId, fetchComments]);
 
+  // // --- Handlers ---
+  // const postComment = async () => {
+  //   if (!content.trim() || isSending) return;
+  //   setIsSending(true);
+
+  //   const ws = wsRef.current;
+  //   if (!ws || ws.readyState !== WebSocket.OPEN) {
+  //     // HTTP Fallback
+  //     try {
+  //       console.log("[Zentia Discussions] Posting spark via HTTP...");
+  //       const response = await fetch('/api/posts/comment', {
+  //         method: 'POST',
+  //         headers: { 'Content-Type': 'application/json' },
+  //         body: JSON.stringify({ postId, content: content.trim(), userId })
+  //       });
+
+  //       if (response.ok) {
+  //         setContent("");
+  //         await fetchComments();
+  //       }
+  //     } catch (err) {
+  //       console.error("[Zentia Discussions] Post failure");
+  //     } finally {
+  //       setIsSending(false);
+  //     }
+  //     return;
+  //   }
+
+  //   // WebSocket Send
+  //   console.log("[Zentia Real-time] Broadcasting spark...");
+  //   ws.send(JSON.stringify({ type: "comment", postId, content: content.trim(), userId }));
+  //   setContent("");
+  // };
+
   // --- Handlers ---
   const postComment = async () => {
-    if (!content.trim() || isSending) return;
+    const trimmedContent = content.trim();
+    if (!trimmedContent || isSending) return;
+
+    // CLIENT-SIDE VALIDATION: Basic XSS prevention
+    if (trimmedContent.includes('<') || trimmedContent.includes('>')) {
+      console.error("[Zentia Discussions] HTML tags not allowed in comments");
+      return;
+    }
+
+    if (trimmedContent.includes('javascript:') || trimmedContent.includes('on')) {
+      console.error("[Zentia Discussions] Suspicious content detected");
+      return;
+    }
+
     setIsSending(true);
 
     const ws = wsRef.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) {
-      // HTTP Fallback
+      // HTTP Fallback with security
       try {
         console.log("[Zentia Discussions] Posting spark via HTTP...");
         const response = await fetch('/api/posts/comment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ postId, content: content.trim(), userId })
+          body: JSON.stringify({
+            postId,
+            content: trimmedContent, // Already validated
+            userId
+          }),
         });
 
         if (response.ok) {
           setContent("");
           await fetchComments();
+        } else {
+          console.error("[Zentia Discussions] Server rejected comment");
         }
       } catch (err) {
-        console.error("[Zentia Discussions] Post failure");
+        console.error("[Zentia Discussions] Post failure:", err);
       } finally {
         setIsSending(false);
       }
       return;
     }
 
-    // WebSocket Send
+    // WebSocket Send with security
     console.log("[Zentia Real-time] Broadcasting spark...");
-    ws.send(JSON.stringify({ type: "comment", postId, content: content.trim(), userId }));
+    ws.send(JSON.stringify({
+      type: "comment",
+      postId,
+      content: trimmedContent, // Already validated
+      userId
+    }));
     setContent("");
   };
 
@@ -181,12 +230,11 @@ const CommentSection = ({ postId, userId }: CommentSectionProps) => {
             {comments.length}
           </span>
         </div>
-        
-        <div className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-all ${
-          connectionStatus === "connected" 
-            ? "border-[#00897B]/20 text-[#00897B] bg-[#E0F2F1]/50" 
-            : "border-[#FFB74D]/20 text-[#FFB74D] bg-[#FFF3E0]/50"
-        }`}>
+
+        <div className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-all ${connectionStatus === "connected"
+          ? "border-[#00897B]/20 text-[#00897B] bg-[#E0F2F1]/50"
+          : "border-[#FFB74D]/20 text-[#FFB74D] bg-[#FFF3E0]/50"
+          }`}>
           <div className={`w-1.5 h-1.5 rounded-full ${connectionStatus === "connected" ? "bg-[#00897B] animate-pulse" : "bg-[#FFB74D]"}`} />
           <span className="text-[10px] font-black uppercase tracking-widest">
             {connectionStatus === "connected" ? "Live Signals" : "HTTP Feed"}
@@ -202,15 +250,27 @@ const CommentSection = ({ postId, userId }: CommentSectionProps) => {
               ME
             </AvatarFallback>
           </Avatar>
-          <Textarea 
+          <Textarea
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e) => {
+              const newValue = e.target.value;
+              // CLIENT-SIDE: Enforce character limit for consistency
+              if (newValue.length <= 200) {
+                setContent(newValue);
+              }
+            }}
             onKeyDown={handleKeyPress}
             placeholder="Spark a thought..."
             className="flex-1 min-h-[44px] max-h-[120px] bg-transparent border-none focus-visible:ring-0 resize-none py-3 px-2 text-sm text-[#4A4A4A] dark:text-white placeholder:text-[#94A3B8] transition-all"
             disabled={isSending}
+            maxLength={300} // HTML5 validation
           />
-          <Button 
+          {/* Character counter */}
+          <div className="absolute bottom-2 right-12 text-[9px] font-bold text-[#94A3B8]">
+            {content.length}/200
+          </div>
+
+          <Button
             size="icon"
             onClick={postComment}
             disabled={isSending || !content.trim()}
@@ -241,7 +301,7 @@ const CommentSection = ({ postId, userId }: CommentSectionProps) => {
         ) : (
           <AnimatePresence initial={false}>
             {comments.map((comment, i) => (
-              <motion.div 
+              <motion.div
                 key={comment.id || `c-${i}`}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -252,7 +312,7 @@ const CommentSection = ({ postId, userId }: CommentSectionProps) => {
                     {comment.user.firstName?.[0] || "Z"}
                   </AvatarFallback>
                 </Avatar>
-                
+
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-bold text-[#4A4A4A] dark:text-gray-200">
@@ -265,7 +325,7 @@ const CommentSection = ({ postId, userId }: CommentSectionProps) => {
                   <p className="text-[13px] leading-relaxed text-[#5A5A5A] dark:text-gray-400 font-medium">
                     {comment.content}
                   </p>
-                  
+
                   <div className="flex items-center gap-4 pt-2 opacity-0 group-hover/item:opacity-100 transition-opacity">
                     <button className="text-[10px] font-black text-[#FF7F50] uppercase tracking-tighter hover:underline">Reply</button>
                     <button className="text-[10px] font-black text-[#00897B] uppercase tracking-tighter hover:underline">Appreciate</button>
@@ -278,7 +338,7 @@ const CommentSection = ({ postId, userId }: CommentSectionProps) => {
       </div>
 
       <div className="pt-4 text-center border-t border-[#FFDAB9]/10">
-         <p className="text-[8px] font-black text-[#94A3B8] uppercase tracking-[0.4em]">Zentia Conversation Field • Verified Signals</p>
+        <p className="text-[8px] font-black text-[#94A3B8] uppercase tracking-[0.4em]">Zentia Conversation Field • Verified Signals</p>
       </div>
     </div>
   );

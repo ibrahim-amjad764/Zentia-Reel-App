@@ -1,12 +1,12 @@
 // src/components/notifications/NotificationDropdown.tsx
 
 "use client";
-import { NotificationItem } from "./NotificationItem";
 import { useNotificationStore, Notification as StoreNotification } from "../../store/notificationStore";
-import api from "../../lib/api";
-import { useEffect, useState } from "react";
 import { Bell, X, Sparkles, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
+import { NotificationItem } from "./NotificationItem";
+import api from "../../lib/api";
 
 interface NotificationAPI {
   id: string;

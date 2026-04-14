@@ -1,6 +1,6 @@
 // api/users/route.ts (get users API)
-import { initDB } from "../../../src/db/init-db";
 import { AppDataSource } from "../../../src/db/data-source";
+import { initDB } from "../../../src/db/init-db";
 import { User } from "../../../src/entities/user";
 
 export const runtime = "nodejs";
@@ -51,18 +51,28 @@ export async function POST(req: Request) {
       email: body.email,
       avatarUrl: body.avatarUrl ?? null,
       bio: body.bio ?? null,
-      jobTitle: body.jobTitle ?? null,
-      company: body.company ?? null,
       phone: body.phone ?? null,
-      location: body.location ?? null,
       website: body.website ?? null,
-      github: body.github ?? null,
-      linkedin: body.linkedin ?? null,
-      twitter: body.twitter ?? null,
       skills: body.skills ?? [],
       hobbies: body.hobbies ?? [],
       isActive: body.isActive ?? true,
       firebaseUid: body.firebaseUid ?? null,
+      social: {
+        github: body.github ?? null,
+        linkedin: body.linkedin ?? null,
+        twitter: body.twitter ?? null,
+        instagram: body.instagram ?? null,
+        facebook: body.facebook ?? null,
+      },
+      // Location fields are separate
+      city: body.city ?? null,
+      country: body.country ?? null,
+      lat: body.lat ?? null,
+      lng: body.lng ?? null,
+      // Job title goes in profile object
+      profile: {
+        jobTitle: body.jobTitle ?? null,
+      },
     });
 
     const saved = await repo.save(user);
